@@ -136,7 +136,6 @@ def run_bot(args):
         utils.cmdline.logger(f'Message for GroupMe:\n{shift_msg}', level='debug')
 
     config.save(filename=CONFIG_FILE_PATH)
-    return sys.exit(0)
 
 
 if __name__ == '__main__':
