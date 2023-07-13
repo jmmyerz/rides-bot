@@ -16,14 +16,20 @@ class RuntimeArgs(object):
 app = Flask(__name__)
 
 
-@app.post('/update/prod')
-@app.post('/update/dev')
+@app.post('/update/prod', endpoint='prod')
+@app.post('/update/dev', endpoint='dev')
 def groupme():
     data = request.get_json()
     args = RuntimeArgs(config.gunicorn.rides_bot_args)
 
-    args.gm_debug = True if request.endpoint == 'dev' else False
-    
+    # Quick and dirty handling of where the bot posts
+    args.gm_debug = False
+    args.groupme = False
+    if request.endpoint == 'dev':
+        args.gm_debug = True
+    elif request.endpoint == 'prod':
+        args.groupme = True
+
     if data.__getitem__('text').lower().strip() == 'refresh':
         run_bot(args)
         return Response(status=200)
