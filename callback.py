@@ -17,11 +17,12 @@ app = Flask(__name__)
 @app.post('/update')
 def groupme():
     data = request.get_json()
+    # TODO: Push these args into the config file
     update_args = {
         'debug': False,
-        'groupme': False,
+        'groupme': True,
         'date': False,
-        'gm_debug': True,
+        'gm_debug': False,
         'login': False,
         'message': False,
     }
