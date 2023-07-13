@@ -20,7 +20,8 @@ class Config(munch.Munch):
                     stream=f,
                     sort_keys=False,
                 )
-            cmdline.logger(f'Saved config: {filename}', level='debug')
+            # TODO: Pass the debug status to this
+            # cmdline.logger(f'Saved config: {filename}', level='debug')
         except:
             raise Exception('Could not save config')
 
