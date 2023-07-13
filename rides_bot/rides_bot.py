@@ -5,7 +5,7 @@ from pathlib import Path
 
 from utils.nested_json import NestedJSONEncoder
 from utils.config import Config
-from utils.w2w import Employee, Shift, W2WSession
+from utils.w2w import W2WSession
 from utils.groupme import GroupMe
 
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / 'config.yaml').resolve()
