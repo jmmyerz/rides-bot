@@ -11,17 +11,17 @@ class UpdateArgs(object):
 
 
 # Handle the groupme callback
-callback = Flask('callback')
+app = Flask(__name__)
 
 
-@callback.post('/update')
+@app.post('/update')
 def groupme():
     data = request.get_json()
     update_args = {
-        'debug': True,
+        'debug': False,
         'groupme': False,
         'date': False,
-        'gm_debug': False,
+        'gm_debug': True,
         'login': False,
         'message': False,
     }
@@ -33,4 +33,4 @@ def groupme():
 
 
 if __name__ == '__main__':
-    callback.run(host='0.0.0.0', port=7045, debug=True)
+    app.run(host='0.0.0.0', port=7045, debug=True)
