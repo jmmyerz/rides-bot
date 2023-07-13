@@ -1,7 +1,7 @@
 import json, requests
 
-from . import cmdline
-from .config import Config, debug as conf_debug
+import cmdline
+from config import Config, debug as conf_debug
 
 
 class GroupMe:
@@ -34,4 +34,4 @@ class GroupMe:
 if __name__ == '__main__':
     config = conf_debug()
     gm = GroupMe(config.groupme)
-    print(gm.__dict__)
+    cmdline.logger(gm.__dict__, level='debug')
