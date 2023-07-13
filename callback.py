@@ -25,7 +25,7 @@ def groupme():
         'login': False,
         'message': False,
     }
-    if data.__getitem__('text') == 'refresh':
+    if data.__getitem__('text').lower().strip() == 'refresh':
         run_bot(UpdateArgs(update_args))
         return Response(status=200)
     else:
