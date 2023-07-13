@@ -8,7 +8,7 @@ from utils.w2w import Employee, Shift, W2WSession
 from utils.groupme import GroupMe
 
 args_for_main = utils.cmdline.get_args()
-sys.path.insert(0, (Path(__file__).parent / 'utils').resolve().as_posix())
+
 CONFIG_FILE_PATH = (Path(__file__).parent / 'config.yaml').resolve()
 DEBUG = args_for_main.debug | False
 
