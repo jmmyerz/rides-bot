@@ -2,7 +2,7 @@ import munch
 from pathlib import Path
 from typing import Self
 
-import cmdline
+from . import cmdline
 
 
 # Extending a Munch object for the sole purpose of adding load from / save to file functions

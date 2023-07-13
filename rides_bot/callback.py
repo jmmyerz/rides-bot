@@ -1,6 +1,6 @@
 from flask import Flask, Response, request
 
-from rides_bot import run_bot
+from .rides_bot import run_bot
 
 
 class UpdateArgs(object):

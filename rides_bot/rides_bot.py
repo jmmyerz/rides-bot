@@ -1,17 +1,14 @@
+from . import path_setup
+
 import datetime, json, sys, random, os
 from pathlib import Path
 
-import utils.cmdline
 from utils.nested_json import NestedJSONEncoder
 from utils.config import Config
 from utils.w2w import Employee, Shift, W2WSession
 from utils.groupme import GroupMe
 
-args_for_main = utils.cmdline.get_args()
-
-CONFIG_FILE_PATH = (Path(__file__).parent / 'config.yaml').resolve()
-DEBUG = args_for_main.debug | False
-
+CONFIG_FILE_PATH = (Path(__file__).parent.parent / 'config.yaml').resolve()
 
 def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
@@ -143,4 +140,5 @@ def run_bot(args):
 
 
 if __name__ == '__main__':
-    run_bot(args_for_main)
+    import utils.cmdline
+    run_bot(utils.cmdline.get_args())

@@ -1,9 +1,9 @@
 import datetime, json, re
 import requests, requests.cookies, requests.utils
 
-import cmdline
-from nested_json import NestedJSONEncoder
-from config import Config, debug as conf_debug
+from . import cmdline
+from .nested_json import NestedJSONEncoder
+from .config import Config, debug as conf_debug
 
 
 class Employee:

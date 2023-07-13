@@ -1,7 +1,7 @@
 import json, requests
 
-import cmdline
-from config import Config, debug as conf_debug
+from . import cmdline
+from .config import Config, debug as conf_debug
 
 
 class GroupMe:
