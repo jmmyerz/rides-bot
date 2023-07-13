@@ -1,0 +1,12 @@
+whentowork:
+    login_url: https://whentowork.com/cgi-bin/w2w.dll/login
+    base_url: https://www3.whentowork.com/cgi-bin/
+    username:
+    password:
+    filters:
+        managers:
+        assistants:
+        coords:
+groupme:
+    bot_id:
+    dev_bot_id:
