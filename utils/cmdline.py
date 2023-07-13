@@ -84,4 +84,4 @@ def get_args(args=default_args):
 
 
 if __name__ == '__main__':
-    print(get_args())
+    logger(get_args(), level='debug')
