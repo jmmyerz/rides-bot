@@ -27,7 +27,7 @@ class headers:
 # Define a logger
 def logger(*args, level: str = 'info') -> None:
     pre_msg = getattr(headers, level)
-    print(f'{pre_msg}', *args)
+    print(pre_msg, *args)
 
 
 # Define command line args

@@ -9,7 +9,7 @@ class RuntimeArgs(object):
 
     def __init__(self, arg_dict):
         for arg, val in arg_dict.items():
-            self.__setattr__(f'{arg}', val)
+            self.__setattr__(arg, val)
 
 
 # Handle the groupme callback
