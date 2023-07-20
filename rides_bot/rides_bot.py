@@ -56,6 +56,12 @@ def run_bot(args):
             if shift.is_north_south_coord and shift.coord_area == 'south'
         ],
     }
+    if args.debug:
+        utils.cmdline.logger(
+            'Filtered shifts:\n'
+            + json.dumps(filtered_shifts, indent=2, cls=NestedJSONEncoder),
+            level='debug',
+        )
 
     # There will probably not be a manager on double, so it's safe to assume if we only find one manager on, there's one shift
     # Build the operating day shift times based on manager on shifts
@@ -64,21 +70,25 @@ def run_bot(args):
         'shifts': {i: {} for i in range(len(filtered_shifts['managers_on']))},
     }
     for shift in filtered_shifts['managers_on']:
-        # Create datetime.time objects from the manager on time strings
-        m_start = datetime.datetime.strptime(
-            shift.manager_on_times['start_time'], '%I:%M'
-        ).time()
-        m_end = datetime.datetime.strptime(
-            shift.manager_on_times['end_time'], '%I:%M'
-        ).time()
-
-        # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
-        # Otherwise, if start hour - end hour is positive, only the end time should probably be pm, so change to 24h time equivalent
-        if m_start.hour - m_end.hour < 0:
-            m_start = m_start.replace(hour=m_start.hour + 12)
-            m_end = m_end.replace(hour=m_end.hour + 12)
+        if type(shift.manager_on_times['start_time']) == datetime.time:
+            m_start = shift.manager_on_times['start_time']
+            m_end = shift.manager_on_times['end_time']
         else:
-            m_end = m_end.replace(hour=m_end.hour + 12)
+            # Create datetime.time objects from the manager on time strings
+            m_start = datetime.datetime.strptime(
+                shift.manager_on_times['start_time'], '%I:%M'
+            ).time()
+            m_end = datetime.datetime.strptime(
+                shift.manager_on_times['end_time'], '%I:%M'
+            ).time()
+
+            # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
+            # Otherwise, if start hour - end hour is positive, only the end time should probably be pm, so change to 24h time equivalent
+            if m_start.hour - m_end.hour < 0:
+                m_start = m_start.replace(hour=m_start.hour + 12)
+                m_end = m_end.replace(hour=m_end.hour + 12)
+            else:
+                m_end = m_end.replace(hour=m_end.hour + 12)
 
         # Change these hours in the shift meta
         shift.manager_on_times = {
@@ -111,7 +121,10 @@ def run_bot(args):
 
     # Build the manager on shifts
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
-        print('Running manager on for meta shift', meta_shift_id)
+        if args.debug:
+            utils.cmdline.logger(
+                f'Running manager on for meta shift {meta_shift_id}', level='debug'
+            )
         for shift in filtered_shifts['managers_on']:
             shift_scored = determine_shift(
                 operating_day_meta,
@@ -121,7 +134,11 @@ def run_bot(args):
                 match_multiple=True,
                 shift_id=meta_shift_id,
             )
-            print(shift_scored[0], shift_scored[4].employee, shift_scored[3])
+            if args.debug:
+                utils.cmdline.logger(
+                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    level='debug',
+                )
             meta_shift['managers_on'].append({
                 'name': shift.employee,
                 'score': shift_scored[3],
@@ -129,7 +146,10 @@ def run_bot(args):
 
     # Build the second manager shifts
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
-        print('Running second manager for meta shift ', meta_shift_id)
+        if args.debug:
+            utils.cmdline.logger(
+                f'Running second manager for meta shift {meta_shift_id}', level='debug'
+            )
         for shift in filtered_shifts['second_managers']:
             shift_scored = determine_shift(
                 operating_day_meta,
@@ -139,7 +159,11 @@ def run_bot(args):
                 match_multiple=True,
                 shift_id=meta_shift_id,
             )
-            print(shift_scored[0], shift_scored[4].employee, shift_scored[3])
+            if args.debug:
+                utils.cmdline.logger(
+                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    level='debug',
+                )
             meta_shift['second_managers'].append({
                 'name': shift.employee,
                 'score': shift_scored[3],
@@ -147,7 +171,10 @@ def run_bot(args):
 
     # Build the north coord shifts
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
-        print('Running north coord for meta shift ', meta_shift_id)
+        if args.debug:
+            utils.cmdline.logger(
+                f'Running north coord for meta shift {meta_shift_id}', level='debug'
+            )
         for shift in filtered_shifts['north_coords']:
             shift_scored = determine_shift(
                 operating_day_meta,
@@ -157,7 +184,11 @@ def run_bot(args):
                 match_multiple=True,
                 shift_id=meta_shift_id,
             )
-            print(shift_scored[0], shift_scored[4].employee, shift_scored[3])
+            if args.debug:
+                utils.cmdline.logger(
+                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    level='debug',
+                )
             meta_shift['north_coords'].append({
                 'name': shift.employee,
                 'score': shift_scored[3],
@@ -165,7 +196,10 @@ def run_bot(args):
     #
     ## Build the south coord shifts
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
-        print('Running south coord for meta shift ', meta_shift_id)
+        if args.debug:
+            utils.cmdline.logger(
+                f'Running south coord for meta shift {meta_shift_id}', level='debug'
+            )
         for shift in filtered_shifts['south_coords']:
             shift_scored = determine_shift(
                 operating_day_meta,
@@ -175,18 +209,17 @@ def run_bot(args):
                 match_multiple=True,
                 shift_id=meta_shift_id,
             )
-            print(shift_scored[0], shift_scored[4].employee, shift_scored[3])
+            if args.debug:
+                utils.cmdline.logger(
+                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    level='debug',
+                )
             meta_shift['south_coords'].append({
                 'name': shift.employee,
                 'score': shift_scored[3],
             })
 
     if args.debug:
-        utils.cmdline.logger(
-            'Filtered shifts:\n'
-            + json.dumps(filtered_shifts, indent=2, cls=NestedJSONEncoder),
-            level='debug',
-        )
         utils.cmdline.logger(
             'Operating day:\n'
             + json.dumps(operating_day_meta, indent=2, cls=NestedJSONEncoder),
