@@ -1,5 +1,6 @@
 import datetime, json, re
 import requests, requests.cookies, requests.utils
+from typing import Tuple
 
 from . import cmdline
 from .nested_json import NestedJSONEncoder
@@ -31,6 +32,11 @@ class Shift:
         self.total_hours = float(total_hours)
         self.description = description
 
+        if self.is_manager_on:
+            times = self._get_manager_times()
+            self._manager_start = times['start_time']
+            self._manager_end = times['end_time']
+
     def __iter__(self):
         dict = {
             'employee': self.employee,
@@ -45,11 +51,13 @@ class Shift:
                 'is_manager_on': self.is_manager_on,
                 'is_second_manager': self.is_second_manager,
                 'is_north_south_coord': self.is_north_south_coord,
-                'which_coord': self.which_coord,
             },
         }
         if self.is_manager_on:
             dict['meta'] |= {'manager_on_times': self.manager_on_times}
+        if self.is_north_south_coord:
+            dict['meta'] |= {'coord_area': self.coord_area}
+
         yield from dict.items()
 
     def __str__(self):
@@ -79,11 +87,30 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             'is_manager_on': r'(?<=manager taking calls)',
-            'manager_on_times': r'(?<=manager taking calls)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})',
+            'manager_on_times': r'(?<=manager taking calls)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm)?',
             'is_second_manager': r'second manager',
-            'is_north_south_coord': r'(?<!(?:shadow\s))(?P<which>north|south)\s?(?:coord)?',
+            'is_north_south_coord': r'^(?<!(?:shadow\s))(?P<which>north|south)\s?(?:coord)?',
         }
         return description_regex[key]
+
+    def _get_manager_times(self) -> dict:
+        match = (
+            re.search(
+                self._description_regex('manager_on_times'),
+                self.description,
+                re.IGNORECASE,
+            )
+            if self.is_manager_on
+            else None
+        )
+        return (
+            {
+                'start_time': match.group('start_time'),
+                'end_time': match.group('end_time'),
+            }
+            if match is not None
+            else {}
+        )
 
     @property
     def to_dict(self):
@@ -103,11 +130,11 @@ class Shift:
 
     @property
     def is_pm_shift(self) -> bool:
-        return True if self.start_am_pm == 'pm' else False
+        return True if self.start_am_pm == 'pm' or self.end_time.hour >= 17 else False
 
     @property
     def is_double_shift(self) -> bool:
-        if self.start_am_pm == 'am' and self.end_am_pm == 'pm':
+        if self.is_am_shift and self.is_pm_shift:
             return True if self.total_hours >= 10 else False
         else:
             return False
@@ -122,23 +149,18 @@ class Shift:
 
     @property
     def manager_on_times(self) -> dict:
-        match = (
-            re.search(
-                self._description_regex('manager_on_times'),
-                self.description,
-                re.IGNORECASE,
-            )
-            if self.is_manager_on
-            else None
-        )
-        return (
-            {
-                'start_time': match.group('start_time'),
-                'end_time': match.group('end_time'),
+        if not self._manager_start or not self._manager_end:
+            return self._get_manager_times()
+        else:
+            return {
+                'start_time': self._manager_start,
+                'end_time': self._manager_end,
             }
-            if match is not None
-            else {}
-        )
+
+    @manager_on_times.setter
+    def manager_on_times(self, set_dict) -> None:
+        self._manager_start = set_dict['start_time']
+        self._manager_end = set_dict['end_time']
 
     @property
     def is_second_manager(self) -> bool:
@@ -159,7 +181,7 @@ class Shift:
         return match is not None
 
     @property
-    def which_coord(self) -> str | None:
+    def coord_area(self) -> str | None:
         match = (
             re.search(
                 self._description_regex('is_north_south_coord'),
@@ -316,6 +338,124 @@ class W2WSession:
     @property
     def session(self) -> requests.Session:
         return self._session
+
+
+# Determine if first or second shift
+# Some of these are probably extraneous but should cover several edge-case mistakes
+def determine_shift(
+    day_meta: dict,
+    shift: Shift,
+    m_start: datetime.time,
+    m_end: datetime.time,
+    match_multiple: bool = False,
+    shift_id: int = 0,
+) -> Tuple[str, datetime.time, datetime.time, int, Shift]:
+    def matching_start(shift: Shift, start: datetime.time, variance: int = 2) -> bool:
+        return True if abs(shift.start_time.hour - start.hour) <= variance else False
+
+    def matching_end(shift: Shift, end: datetime.time, variance: int = 2) -> bool:
+        return True if abs(shift.end_time.hour - end.hour) <= variance else False
+
+    score = 0
+    matched = 0
+    id_times_score = False
+
+    if day_meta['detected_shifts'] == 1:
+        return (0, m_start, m_end, 100, shift)
+
+    ### This set covers both correct descriptions and double shifts with a single manager on time block
+    # Matches e.g. a start time of 8 and a manager time of 8-3
+    if m_start.hour < 12 and matching_start(shift, m_start):
+        matched += 1
+        id_times_score = 0, m_start, m_end
+        score += 100
+    # Matches e.g. a start time of 15 and a manager time of 3-10
+    elif m_start.hour >= 12 and matching_start(shift, m_start):
+        matched += 1
+        id_times_score = 1, m_start, m_end
+        score += 100
+    # Matches e.g. an end time of 15 and a manager time of 8-3
+    if (
+        m_end.hour <= 17
+        and matching_end(shift, m_end)
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 0, m_start, m_end
+        score += 100
+    # Matches e.g. an end time of 22 and a manager time of 3-10
+    elif (
+        m_end.hour > 17
+        and matching_end(shift, m_end)
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 1, m_start, m_end
+        score += 100
+
+    ### This set covers mistakes in the shift description
+    # Matches e.g. a start time of 8 amd a mislabeled manager time of 3-10
+    if (
+        not matching_start(shift, m_start)
+        and shift.start_time.hour < 12
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 0, shift.start_time, shift.end_time
+        score -= 50
+    # Matches e.g. a start time of 15 and a mislabeled manager time of 8-3
+    elif (
+        not matching_start(shift, m_start)
+        and shift.start_time.hour >= 12
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 1, shift.start_time, shift.end_time
+        score -= 50
+    # Matches e.g. an end time of 15 amd a mislabeled manager time of 3-10
+    if (
+        not matching_end(shift, m_end)
+        and shift.end_time.hour <= 17
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 0, shift.start_time, shift.end_time
+        score -= 50
+    # Matches e.g. an end time of 22 and a mislabeled manager time of 8-3
+    elif (
+        not matching_end(shift, m_end)
+        and shift.end_time.hour > 17
+        and (
+            (not match_multiple and matched < 1)
+            or (match_multiple and shift_id in (0, 1))
+        )
+    ):
+        matched += 1
+        id_times_score = 1, shift.start_time, shift.end_time
+        score -= 50
+
+    if not id_times_score:
+        return (-1, None, None, 0, shift)
+
+    return id_times_score + (
+        score,
+        shift,
+    )
 
 
 # Debuggin' time
