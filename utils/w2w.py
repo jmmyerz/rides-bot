@@ -34,8 +34,12 @@ class Shift:
 
         if self.is_manager_on:
             times = self._get_manager_times()
-            self._manager_start = times['start_time']
-            self._manager_end = times['end_time']
+            if len(times) > 0:
+                self._manager_start = times['start_time']
+                self._manager_end = times['end_time']
+            else:
+                self._manager_start = self.start_time
+                self._manager_end = self.end_time
 
     def __iter__(self):
         dict = {
@@ -86,7 +90,7 @@ class Shift:
     # Hold the regex for our description filters
     def _description_regex(self, key: str):
         description_regex = {
-            'is_manager_on': r'(?<=manager taking calls)',
+            'is_manager_on': r'(?:manager taking calls|manager on)',
             'manager_on_times': r'(?<=manager taking calls)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm)?',
             'is_second_manager': r'second manager',
             'is_north_south_coord': r'^(?<!(?:shadow\s))(?P<which>north|south)\s?(?:coord)?',
