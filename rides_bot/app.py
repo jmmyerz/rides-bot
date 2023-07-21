@@ -1,12 +1,12 @@
 from . import path_setup
 
-import datetime, json, sys, random, os
+import datetime, json, sys, random
 from pathlib import Path
-from collections import Counter
 
+import utils.shift_logic as shift_logic
 from utils.nested_json import NestedJSONEncoder
 from utils.config import Config
-from utils.w2w import determine_shift, Shift, W2WSession
+from utils.w2w import W2WSession
 from utils.groupme import GroupMe
 
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / 'config.yaml').resolve()
@@ -63,63 +63,10 @@ def run_bot(args):
             level='debug',
         )
 
-    # There will probably not be a manager on double, so it's safe to assume if we only find one manager on, there's one shift
-    # Build the operating day shift times based on manager on shifts
-    operating_day_meta = {
-        'detected_shifts': len(filtered_shifts['managers_on']),
-        'shifts': {i: {} for i in range(len(filtered_shifts['managers_on']))},
-    }
-    for shift in filtered_shifts['managers_on']:
-        if type(shift.manager_on_times['start_time']) == datetime.time:
-            m_start = shift.manager_on_times['start_time']
-            m_end = shift.manager_on_times['end_time']
-        else:
-            # Create datetime.time objects from the manager on time strings
-            m_start = datetime.datetime.strptime(
-                shift.manager_on_times['start_time'], '%I:%M'
-            ).time()
-            m_end = datetime.datetime.strptime(
-                shift.manager_on_times['end_time'], '%I:%M'
-            ).time()
+    # Build the operating day meta dict
+    operating_day_meta = shift_logic.build_operating_day_meta(filtered_shifts)
 
-            # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
-            # Otherwise, if start hour - end hour is positive, only the end time should probably be pm, so change to 24h time equivalent
-            if m_start.hour - m_end.hour < 0:
-                m_start = m_start.replace(hour=m_start.hour + 12)
-                m_end = m_end.replace(hour=m_end.hour + 12)
-            else:
-                m_end = m_end.replace(hour=m_end.hour + 12)
-
-        # Change these hours in the shift meta
-        shift.manager_on_times = {
-            'start_time': m_start,
-            'end_time': m_end,
-        }
-
-        (
-            shift_id,
-            corrected_m_start,
-            corrected_m_end,
-            score,
-            _meta_shift,
-        ) = determine_shift(operating_day_meta, shift, m_start, m_end)
-
-        # Add times and positions to the operating day meta
-        operating_day_meta['shifts'][shift_id] = {
-            'shift_times': {
-                'start': corrected_m_start,
-                'end': corrected_m_end,
-            },
-            'managers_on': [],
-        }
-        if len(filtered_shifts['second_managers']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('second_managers', [])
-        if len(filtered_shifts['north_coords']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('north_coords', [])
-        if len(filtered_shifts['south_coords']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('south_coords', [])
-
-    # Build the manager on shifts
+    # Build all the shift candidates
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
         # Build the manager on shifts
         if args.debug:
@@ -128,7 +75,7 @@ def run_bot(args):
                 level='debug',
             )
         for shift in filtered_shifts['managers_on']:
-            shift_scored = determine_shift(
+            shift_scored = shift_logic.determine_shift(
                 operating_day_meta,
                 shift,
                 meta_shift['shift_times']['start'],
@@ -156,7 +103,7 @@ def run_bot(args):
                 level='debug',
             )
         for shift in filtered_shifts['second_managers']:
-            shift_scored = determine_shift(
+            shift_scored = shift_logic.determine_shift(
                 operating_day_meta,
                 shift,
                 meta_shift['shift_times']['start'],
@@ -184,7 +131,7 @@ def run_bot(args):
                 level='debug',
             )
         for shift in filtered_shifts['north_coords']:
-            shift_scored = determine_shift(
+            shift_scored = shift_logic.determine_shift(
                 operating_day_meta,
                 shift,
                 meta_shift['shift_times']['start'],
@@ -212,7 +159,7 @@ def run_bot(args):
                 level='debug',
             )
         for shift in filtered_shifts['south_coords']:
-            shift_scored = determine_shift(
+            shift_scored = shift_logic.determine_shift(
                 operating_day_meta,
                 shift,
                 meta_shift['shift_times']['start'],
