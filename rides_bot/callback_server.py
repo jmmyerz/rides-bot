@@ -1,9 +1,10 @@
 from flask import Flask, Response, request
 
 from utils.config import Config
-from .rides_bot import run_bot, CONFIG_FILE_PATH
+from .app import run_bot, CONFIG_FILE_PATH
 
 config = Config().load(CONFIG_FILE_PATH)
+
 
 class RuntimeArgs(object):
 
