@@ -121,9 +121,11 @@ def run_bot(args):
 
     # Build the manager on shifts
     for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
+        # Build the manager on shifts
         if args.debug:
             utils.cmdline.logger(
-                f'Running manager on for meta shift {meta_shift_id}', level='debug'
+                f'Running {utils.cmdline.cmd_colors.OKCYAN}manager on{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}',
+                level='debug',
             )
         for shift in filtered_shifts['managers_on']:
             shift_scored = determine_shift(
@@ -136,7 +138,10 @@ def run_bot(args):
             )
             if args.debug:
                 utils.cmdline.logger(
-                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    utils.cmdline.colorize(
+                        f'{shift_scored[4].employee} score: {shift_scored[3]}',
+                        utils.cmdline.cmd_colors.ITALIC,
+                    ),
                     level='debug',
                 )
             meta_shift['managers_on'].append({
@@ -144,11 +149,11 @@ def run_bot(args):
                 'score': shift_scored[3],
             })
 
-    # Build the second manager shifts
-    for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
+        # Build the second manager shifts
         if args.debug:
             utils.cmdline.logger(
-                f'Running second manager for meta shift {meta_shift_id}', level='debug'
+                f'Running {utils.cmdline.cmd_colors.OKCYAN}second manager{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}',
+                level='debug',
             )
         for shift in filtered_shifts['second_managers']:
             shift_scored = determine_shift(
@@ -161,7 +166,10 @@ def run_bot(args):
             )
             if args.debug:
                 utils.cmdline.logger(
-                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    utils.cmdline.colorize(
+                        f'{shift_scored[4].employee} score: {shift_scored[3]}',
+                        utils.cmdline.cmd_colors.ITALIC,
+                    ),
                     level='debug',
                 )
             meta_shift['second_managers'].append({
@@ -169,11 +177,11 @@ def run_bot(args):
                 'score': shift_scored[3],
             })
 
-    # Build the north coord shifts
-    for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
+        # Build the north coord shifts
         if args.debug:
             utils.cmdline.logger(
-                f'Running north coord for meta shift {meta_shift_id}', level='debug'
+                f'Running {utils.cmdline.cmd_colors.OKCYAN}north coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}',
+                level='debug',
             )
         for shift in filtered_shifts['north_coords']:
             shift_scored = determine_shift(
@@ -186,19 +194,22 @@ def run_bot(args):
             )
             if args.debug:
                 utils.cmdline.logger(
-                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    utils.cmdline.colorize(
+                        f'{shift_scored[4].employee} score: {shift_scored[3]}',
+                        utils.cmdline.cmd_colors.ITALIC,
+                    ),
                     level='debug',
                 )
             meta_shift['north_coords'].append({
                 'name': shift.employee,
                 'score': shift_scored[3],
             })
-    #
-    ## Build the south coord shifts
-    for meta_shift_id, meta_shift in operating_day_meta['shifts'].items():
+
+        # Build the south coord shifts
         if args.debug:
             utils.cmdline.logger(
-                f'Running south coord for meta shift {meta_shift_id}', level='debug'
+                f'Running {utils.cmdline.cmd_colors.OKCYAN}south coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}',
+                level='debug',
             )
         for shift in filtered_shifts['south_coords']:
             shift_scored = determine_shift(
@@ -211,7 +222,10 @@ def run_bot(args):
             )
             if args.debug:
                 utils.cmdline.logger(
-                    f'>{shift_scored[4].employee} score: {shift_scored[3]}',
+                    utils.cmdline.colorize(
+                        f'{shift_scored[4].employee} score: {shift_scored[3]}',
+                        utils.cmdline.cmd_colors.ITALIC,
+                    ),
                     level='debug',
                 )
             meta_shift['south_coords'].append({
