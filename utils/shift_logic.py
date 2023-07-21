@@ -22,7 +22,7 @@ def determine_shift(
 
     score = 0
     matched = 0
-    id_times_score = False
+    id_times = False
 
     if day_meta['detected_shifts'] == 1:
         return (0, m_start, m_end, 100, shift)
@@ -31,12 +31,12 @@ def determine_shift(
     # Matches e.g. a start time of 8 and a manager time of 8-3
     if m_start.hour < 12 and matching_start(shift, m_start):
         matched += 1
-        id_times_score = 0, m_start, m_end
+        id_times = 0, m_start, m_end
         score += 100
     # Matches e.g. a start time of 15 and a manager time of 3-10
     elif m_start.hour >= 12 and matching_start(shift, m_start):
         matched += 1
-        id_times_score = 1, m_start, m_end
+        id_times = 1, m_start, m_end
         score += 100
     # Matches e.g. an end time of 15 and a manager time of 8-3
     if (
@@ -48,7 +48,7 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 0, m_start, m_end
+        id_times = 0, m_start, m_end
         score += 100
     # Matches e.g. an end time of 22 and a manager time of 3-10
     elif (
@@ -60,7 +60,7 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 1, m_start, m_end
+        id_times = 1, m_start, m_end
         score += 100
 
     ### This set covers mistakes in the shift description
@@ -74,7 +74,7 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 0, shift.start_time, shift.end_time
+        id_times = 0, shift.start_time, shift.end_time
         score -= 50
     # Matches e.g. a start time of 15 and a mislabeled manager time of 8-3
     elif (
@@ -86,7 +86,7 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 1, shift.start_time, shift.end_time
+        id_times = 1, shift.start_time, shift.end_time
         score -= 50
     # Matches e.g. an end time of 15 amd a mislabeled manager time of 3-10
     if (
@@ -98,7 +98,7 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 0, shift.start_time, shift.end_time
+        id_times = 0, shift.start_time, shift.end_time
         score -= 50
     # Matches e.g. an end time of 22 and a mislabeled manager time of 8-3
     elif (
@@ -110,13 +110,13 @@ def determine_shift(
         )
     ):
         matched += 1
-        id_times_score = 1, shift.start_time, shift.end_time
+        id_times = 1, shift.start_time, shift.end_time
         score -= 50
 
-    if not id_times_score:
+    if not id_times:
         return (-1, None, None, 0, shift)
 
-    return id_times_score + (
+    return id_times + (
         score,
         shift,
     )
