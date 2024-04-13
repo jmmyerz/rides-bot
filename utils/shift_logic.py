@@ -24,7 +24,7 @@ def determine_shift(
     matched = 0
     id_times = False
 
-    if day_meta['detected_shifts'] == 1:
+    if day_meta["detected_shifts"] == 1:
         return (0, m_start, m_end, 100, shift)
 
     ### This set covers both correct descriptions and double shifts with a single manager on time block
@@ -126,20 +126,20 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
     # There will probably not be a manager on double, so it's safe to assume if we only find one manager on, there's one shift
     # Build the operating day shift times based on manager on shifts
     operating_day_meta = {
-        'detected_shifts': len(filtered_shifts['managers_on']),
-        'shifts': {i: {} for i in range(len(filtered_shifts['managers_on']))},
+        "detected_shifts": len(filtered_shifts["managers_on"]),
+        "shifts": {i: {} for i in range(len(filtered_shifts["managers_on"]))},
     }
-    for shift in filtered_shifts['managers_on']:
-        if type(shift.manager_on_times['start_time']) == datetime.time:
-            m_start = shift.manager_on_times['start_time']
-            m_end = shift.manager_on_times['end_time']
+    for shift in filtered_shifts["managers_on"]:
+        if type(shift.manager_on_times["start_time"]) == datetime.time:
+            m_start = shift.manager_on_times["start_time"]
+            m_end = shift.manager_on_times["end_time"]
         else:
             # Create datetime.time objects from the manager on time strings
             m_start = datetime.datetime.strptime(
-                shift.manager_on_times['start_time'], '%I:%M'
+                shift.manager_on_times["start_time"], "%I:%M"
             ).time()
             m_end = datetime.datetime.strptime(
-                shift.manager_on_times['end_time'], '%I:%M'
+                shift.manager_on_times["end_time"], "%I:%M"
             ).time()
 
             # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
@@ -152,8 +152,8 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
 
         # Change these hours in the shift meta
         shift.manager_on_times = {
-            'start_time': m_start,
-            'end_time': m_end,
+            "start_time": m_start,
+            "end_time": m_end,
         }
 
         (
@@ -165,18 +165,18 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
         ) = determine_shift(operating_day_meta, shift, m_start, m_end)
 
         # Add times and positions to the operating day meta
-        operating_day_meta['shifts'][shift_id] = {
-            'shift_times': {
-                'start': corrected_m_start,
-                'end': corrected_m_end,
+        operating_day_meta["shifts"][shift_id] = {
+            "shift_times": {
+                "start": corrected_m_start,
+                "end": corrected_m_end,
             },
-            'managers_on': [],
+            "managers_on": [],
         }
-        if len(filtered_shifts['second_managers']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('second_managers', [])
-        if len(filtered_shifts['north_coords']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('north_coords', [])
-        if len(filtered_shifts['south_coords']) > 0:
-            operating_day_meta['shifts'][shift_id].__setitem__('south_coords', [])
+        if len(filtered_shifts["second_managers"]) > 0:
+            operating_day_meta["shifts"][shift_id].__setitem__("second_managers", [])
+        if len(filtered_shifts["north_coords"]) > 0:
+            operating_day_meta["shifts"][shift_id].__setitem__("north_coords", [])
+        if len(filtered_shifts["south_coords"]) > 0:
+            operating_day_meta["shifts"][shift_id].__setitem__("south_coords", [])
 
     return operating_day_meta
