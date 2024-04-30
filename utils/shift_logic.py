@@ -20,6 +20,9 @@ def determine_shift(
     def matching_end(shift: Shift, end: datetime.time, variance: int = 2) -> bool:
         return True if abs(shift.end_time.hour - end.hour) <= variance else False
 
+    def get_variance(shift_time: datetime.time, manager_time: datetime.time) -> int:
+        return abs(shift_time.hour - manager_time.hour)
+
     score = 0
     matched = 0
     id_times = False
@@ -27,91 +30,112 @@ def determine_shift(
     if day_meta["detected_shifts"] == 1:
         return (0, m_start, m_end, 100, shift)
 
-    ### This set covers both correct descriptions and double shifts with a single manager on time block
-    # Matches e.g. a start time of 8 and a manager time of 8-3
-    if m_start.hour < 12 and matching_start(shift, m_start):
-        matched += 1
-        id_times = 0, m_start, m_end
-        score += 100
-    # Matches e.g. a start time of 15 and a manager time of 3-10
-    elif m_start.hour >= 12 and matching_start(shift, m_start):
-        matched += 1
-        id_times = 1, m_start, m_end
-        score += 100
-    # Matches e.g. an end time of 15 and a manager time of 8-3
-    if (
-        m_end.hour <= 17
-        and matching_end(shift, m_end)
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 0, m_start, m_end
-        score += 100
-    # Matches e.g. an end time of 22 and a manager time of 3-10
-    elif (
-        m_end.hour > 17
-        and matching_end(shift, m_end)
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 1, m_start, m_end
-        score += 100
+    if True:
 
-    ### This set covers mistakes in the shift description
-    # Matches e.g. a start time of 8 amd a mislabeled manager time of 3-10
-    if (
-        not matching_start(shift, m_start)
-        and shift.start_time.hour < 12
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 0, shift.start_time, shift.end_time
-        score -= 50
-    # Matches e.g. a start time of 15 and a mislabeled manager time of 8-3
-    elif (
-        not matching_start(shift, m_start)
-        and shift.start_time.hour >= 12
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 1, shift.start_time, shift.end_time
-        score -= 50
-    # Matches e.g. an end time of 15 amd a mislabeled manager time of 3-10
-    if (
-        not matching_end(shift, m_end)
-        and shift.end_time.hour <= 17
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 0, shift.start_time, shift.end_time
-        score -= 50
-    # Matches e.g. an end time of 22 and a mislabeled manager time of 8-3
-    elif (
-        not matching_end(shift, m_end)
-        and shift.end_time.hour > 17
-        and (
-            (not match_multiple and matched < 1)
-            or (match_multiple and shift_id in (0, 1))
-        )
-    ):
-        matched += 1
-        id_times = 1, shift.start_time, shift.end_time
-        score -= 50
+        if hasattr(shift, "_manager_start"):
+            score -= get_variance(shift._manager_start, m_start) * 10
+        if hasattr(shift, "_manager_end"):
+            score -= get_variance(shift._manager_end, m_end) * 10
+
+        ### This set covers both correct descriptions and double shifts with a single manager on time block
+        # Matches e.g. a start time of 8 and a manager time of 8-3
+        if m_start.hour < 12 and matching_start(shift, m_start):
+            matched += 1
+            id_times = 0, m_start, m_end
+            score += 200
+        # Matches e.g. a start time of 15 and a manager time of 3-10
+        elif m_start.hour >= 12 and matching_start(shift, m_start):
+            matched += 1
+            id_times = 1, m_start, m_end
+            score += 200
+
+        # Matches e.g. an end time of 15 and a manager time of 8-3
+        if (
+            m_end.hour <= 17
+            and matching_end(shift, m_end)
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 0, m_start, m_end
+            score += 200
+        # Matches e.g. an end time of 22 and a manager time of 3-10
+        elif (
+            m_end.hour > 17
+            and matching_end(shift, m_end)
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 1, m_start, m_end
+            score += 200
+
+        ### This set covers mistakes in the shift description
+        # Matches e.g. a start time of 8 and a mislabeled manager time of 3-10
+        if (
+            not matching_start(shift, m_start)
+            and shift.start_time.hour < 12
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 0, shift.start_time, shift.end_time
+
+            difference = abs(shift.start_time.hour - m_start.hour)
+            score -= get_variance(shift.start_time, m_start) * 10
+        # Matches e.g. a start time of 15 and a mislabeled manager time of 8-3
+        elif (
+            not matching_start(shift, m_start)
+            and shift.start_time.hour >= 12
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 1, shift.start_time, shift.end_time
+            difference = abs(shift.start_time.hour - m_start.hour)
+            score -= get_variance(shift.start_time, m_start) * 10
+        # Matches e.g. an end time of 15 amd a mislabeled manager time of 3-10
+        if (
+            not matching_end(shift, m_end)
+            and shift.end_time.hour <= 17
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 0, shift.start_time, shift.end_time
+            difference = abs(shift.end_time.hour - m_end.hour)
+            score -= get_variance(shift.end_time, m_end) * 10
+        # Matches e.g. an end time of 22 and a mislabeled manager time of 8-3
+        elif (
+            not matching_end(shift, m_end)
+            and shift.end_time.hour > 17
+            and (
+                (not match_multiple and matched < 1)
+                or (match_multiple and shift_id in (0, 1))
+            )
+        ):
+            matched += 1
+            id_times = 1, shift.start_time, shift.end_time
+            difference = abs(shift.end_time.hour - m_end.hour)
+            score -= get_variance(shift.end_time, m_end) * 10
+
+    # Score the shift based on the variance between the shift start and manager on start times
+    # score -= get_variance(shift.start_time, m_start) * 10
+
+    # Score the shift based on the variance between the shift end and manager on end times
+    # score -= get_variance(shift.end_time, m_end) * 10
+
+    # id_times = 0, shift.start_time, shift.end_time
 
     if not id_times:
         return (-1, None, None, 0, shift)

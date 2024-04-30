@@ -1,6 +1,5 @@
-import datetime, json, re
+import datetime, json, regex as re
 import requests, requests.cookies, requests.utils
-from typing import Tuple
 
 from . import cmdline
 from .nested_json import NestedJSONEncoder
@@ -75,6 +74,7 @@ class Shift:
         formats = [
             "%I%p",  # e.g. 3pm
             "%I:%M%p",  # e.g. 11:30am
+            "%I:%M",  # e.g. 8:00
         ]
 
         # Set the default time to midnight and try all the formats
@@ -91,26 +91,68 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             "is_manager_on": r"(?:manager taking calls|manager on)",
-            "manager_on_times": r"(?:manager taking calls|manager on)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm|a|p)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?:am|pm|a|p)?",
+            "manager_on_times": r"(?:manager taking calls|manager on)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
             "is_second_manager": r"second manager",
-            "is_north_south_coord": r"^(?<!(?:shadow\s))(?P<which>north|south)\s?(?:coord)?",
+            "is_north_south_coord": r"^(?<!(?:shadow\s))(?P<which>north|south)(\s?(?=coord|coordinator)|$)",
         }
-        return description_regex[key]
+        _description_patterns_fuzzy = {
+            "is_manager_on": f"({description_regex['is_manager_on']}){{1s+2i+2d<=3}}",
+            "manager_on_times": f"({description_regex['manager_on_times']}){{1s+2i+2d<=3}}",
+            "is_second_manager": f"({description_regex['is_second_manager']}){{1s+2i+2d<=3}}",
+            "is_north_south_coord": f"({description_regex['is_north_south_coord']}){{1s+2i+2d<=3}}",
+        }
+        return _description_patterns_fuzzy[key]
 
     def _get_manager_times(self) -> dict:
         match = (
             re.search(
                 self._description_regex("manager_on_times"),
                 self.description,
-                re.IGNORECASE,
+                re.BESTMATCH | re.IGNORECASE,
             )
             if self.is_manager_on
             else None
         )
+        start_time = match.group("start_time") if match is not None else None
+        end_time = match.group("end_time") if match is not None else None
+
+        # Create datetime.time objects from the manager on time strings
+        # Strings could be formatted as 8, 8:00, 8:30, 8am, 8:30am, 8:30a, 8:30p, etc.
+        # Match groups are start_time, start_am_pm, end_time, end_am_pm
+
+        start_am_pm = match.group("start_am_pm") if match is not None else None
+        end_am_pm = match.group("end_am_pm") if match is not None else None
+
+        if start_time is not None:
+            if start_am_pm is not None:
+                if start_am_pm in ["a", "p"]:
+                    start_am_pm = f"{start_am_pm}m"
+                # Sanity check that shouldn't be necessary!
+                # Start time should never be between 0-6am, so if it is, it's probably pm
+                if int(start_time.split(":")[0]) < 6:
+                    start_am_pm = "pm"
+                start_time = f"{start_time}{start_am_pm}"
+                start_time = self._to_time(start_time)
+            else:
+                start_time = self._to_time(start_time)
+
+        if end_time is not None:
+            if end_am_pm is not None:
+                if end_am_pm in ["a", "p"]:
+                    end_am_pm = f"{end_am_pm}m"
+                # Sanity check that shouldn't be necessary!
+                # End time should never be am, except maybe 12am or 1am on a rare occasion
+                if end_am_pm == "am" and int(end_time.split(":")[0]) > 1:
+                    end_am_pm = "pm"
+                end_time = f"{end_time}{end_am_pm}"
+                end_time = self._to_time(end_time)
+            else:
+                end_time = self._to_time(end_time)
+
         return (
             {
-                "start_time": match.group("start_time"),
-                "end_time": match.group("end_time"),
+                "start_time": start_time,
+                "end_time": end_time,
             }
             if match is not None
             else {}
@@ -147,7 +189,9 @@ class Shift:
     @property
     def is_manager_on(self) -> bool:
         match = re.search(
-            self._description_regex("is_manager_on"), self.description, re.IGNORECASE
+            self._description_regex("is_manager_on"),
+            self.description,
+            re.BESTMATCH | re.IGNORECASE,
         )
         return match is not None
 
@@ -171,7 +215,7 @@ class Shift:
         match = re.search(
             self._description_regex("is_second_manager"),
             self.description,
-            re.IGNORECASE,
+            re.BESTMATCH | re.IGNORECASE,
         )
         return match is not None
 
@@ -180,7 +224,7 @@ class Shift:
         match = re.search(
             self._description_regex("is_north_south_coord"),
             self.description,
-            re.IGNORECASE,
+            re.BESTMATCH | re.IGNORECASE,
         )
         return match is not None
 
@@ -190,7 +234,7 @@ class Shift:
             re.search(
                 self._description_regex("is_north_south_coord"),
                 self.description,
-                re.IGNORECASE,
+                re.BESTMATCH | re.IGNORECASE,
             )
             if self.is_north_south_coord
             else None
