@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, regex
 
 from utils.config import Config
 from .app import run_bot, CONFIG_FILE_PATH
@@ -17,8 +17,8 @@ class RuntimeArgs(object):
 app = Flask(__name__)
 
 
-@app.post('/update/prod', endpoint='prod')
-@app.post('/update/dev', endpoint='dev')
+@app.post("/update/prod", endpoint="prod")
+@app.post("/update/dev", endpoint="dev")
 def groupme():
     data = request.get_json()
     args = RuntimeArgs(config.gunicorn.rides_bot_args)
@@ -26,12 +26,20 @@ def groupme():
     # Quick and dirty handling of where the bot posts
     args.gm_debug = False
     args.groupme = False
-    if request.endpoint == 'dev':
+    if request.endpoint == "dev":
         args.gm_debug = True
-    elif request.endpoint == 'prod':
+    elif request.endpoint == "prod":
         args.groupme = True
 
-    if data.__getitem__('text').lower().strip() == 'refresh':
+    date_pattern = r"analyze ((0[0-9]{1}|1[0-2]{1})\/([0-2]{1}[0-9]{1}|3[0-1]{1})\/20[1-3]{1}[0-9]{1})"
+    message = data.__getitem__("text").lower().strip()
+
+    if message == "refresh":
+        run_bot(args)
+        return Response(status=200)
+
+    elif regex.match(date_pattern, message):
+        args.date = regex.search(date_pattern, message).group(1)
         run_bot(args)
         return Response(status=200)
     else:
