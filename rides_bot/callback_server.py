@@ -1,4 +1,5 @@
-from flask import Flask, Response, request, regex
+import re
+from flask import Flask, Response, request
 
 from utils.config import Config
 from .app import run_bot, CONFIG_FILE_PATH
@@ -38,8 +39,8 @@ def groupme():
         run_bot(args)
         return Response(status=200)
 
-    elif regex.match(date_pattern, message):
-        args.date = regex.search(date_pattern, message).group(1)
+    elif re.match(date_pattern, message):
+        args.date = re.search(date_pattern, message).group(1)
         run_bot(args)
         return Response(status=200)
     else:
