@@ -1,8 +1,7 @@
-from . import path_setup
-
 import datetime, json, sys, random
 from pathlib import Path
 
+import utils
 import utils.shift_logic as shift_logic
 from utils.nested_json import NestedJSONEncoder
 from utils.config import Config
