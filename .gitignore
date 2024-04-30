@@ -5,6 +5,10 @@
 # Mac
 **.DS_Store
 
+# Virtual envs
+venv/
+virtual_env/
+
 # C extensions
 *.so
 
