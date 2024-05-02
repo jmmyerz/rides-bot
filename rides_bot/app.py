@@ -54,6 +54,11 @@ def run_bot(args):
             for shift in shifts["coords"] + shifts["assistants"]
             if shift.is_north_south_coord and shift.coord_area == "south"
         ],
+        "middle_coords": [
+            shift
+            for shift in shifts["coords"] + shifts["assistants"]
+            if shift.is_middle_misc_coord
+        ]
     }
     if args.debug:
         utils.cmdline.logger(
@@ -192,6 +197,35 @@ def run_bot(args):
                 }
             )
 
+            # Build Middle/Misc Coord Shifts
+            if args.debug:
+                utils.cmdline.logger(
+                    f"Running {utils.cmdline.cmd_colors.OKCYAN}middle coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
+                    level="debug",
+                )
+            for shift in filtered_shifts["middle_coords"]:
+                shift_scored = shift_logic.determine_shift(
+                    operating_day_meta,
+                    shift,
+                    meta_shift["shift_times"]["start"],
+                    meta_shift["shift_times"]["end"],
+                    match_multiple=True,
+                    shift_id=meta_shift_id,
+                )
+                if args.debug:
+                    utils.cmdline.logger(
+                        utils.cmdline.colorize(
+                            f"{shift_scored[4].employee} score: {shift_scored[3]}",
+                            utils.cmdline.cmd_colors.ITALIC,
+                        ),
+                        level="debug",
+                    )
+                meta_shift["middle_coords"].append(
+                    {
+                        "name": shift.employee,
+                        "score": shift_scored[3],
+                    }
+                )
     if args.debug:
         utils.cmdline.logger(
             "Operating day:\n"
