@@ -54,12 +54,15 @@ class Shift:
                 "is_manager_on": self.is_manager_on,
                 "is_second_manager": self.is_second_manager,
                 "is_north_south_coord": self.is_north_south_coord,
+                "is_middle_misc_coord": self.is_middle_misc_coord,
             },
         }
         if self.is_manager_on:
             dict["meta"] |= {"manager_on_times": self.manager_on_times}
         if self.is_north_south_coord:
             dict["meta"] |= {"coord_area": self.coord_area}
+        if self.is_middle_misc_coord:
+            dict["meta"] |= {"middle_misc_coord": self.middle_misc_coord}
 
         yield from dict.items()
 
@@ -94,12 +97,14 @@ class Shift:
             "manager_on_times": r"(?:manager taking calls|manager on)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
             "is_second_manager": r"second manager",
             "is_north_south_coord": r"^(?<!(?:shadow\s))(?P<which>north|south)(\s?(?=coord|coordinator)|$)",
+            "is_middle_coord": r"(?:middle coord|misc coord)",
         }
         _description_patterns_fuzzy = {
             "is_manager_on": f"({description_regex['is_manager_on']}){{1s+2i+2d<=3}}",
             "manager_on_times": f"({description_regex['manager_on_times']}){{1s+2i+2d<=3}}",
             "is_second_manager": f"({description_regex['is_second_manager']}){{1s+2i+2d<=3}}",
             "is_north_south_coord": f"({description_regex['is_north_south_coord']}){{1s+2i+2d<=3}}",
+            "is_middle_coord": f"({description_regex['is_middle_coord']}){{1s+2i+2d<=3}}",
         }
         return _description_patterns_fuzzy[key]
 

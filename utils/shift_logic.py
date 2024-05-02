@@ -202,5 +202,7 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
             operating_day_meta["shifts"][shift_id].__setitem__("north_coords", [])
         if len(filtered_shifts["south_coords"]) > 0:
             operating_day_meta["shifts"][shift_id].__setitem__("south_coords", [])
+        if len(filtered_shifts["middle_coords"]) > 0:
+            operating_day_meta["shifts"][shift_id].__setitem__("middle_coords", [])
 
     return operating_day_meta
