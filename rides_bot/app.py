@@ -7,6 +7,7 @@ from utils.nested_json import NestedJSONEncoder
 from utils.config import Config
 from utils.w2w import W2WSession
 from utils.groupme import GroupMe
+from utils.discord import SingleMessageClient
 
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
 
@@ -64,11 +65,6 @@ def run_bot(args):
 
     # Build the operating day meta dict
     operating_day_meta = shift_logic.build_operating_day_meta(filtered_shifts)
-
-    utils.cmdline.logger(
-        f"Operating day meta:\n{json.dumps(operating_day_meta, indent=2, cls=NestedJSONEncoder)}",
-        level="debug",
-    )
 
     # Build all the shift candidates
     for meta_shift_id, meta_shift in operating_day_meta["shifts"].items():
@@ -265,11 +261,35 @@ def run_bot(args):
         return outlist
 
     shift_msg = "\n".join(build_message(operating_day_meta))
+
+    # The discord message should remove lines beginning with "Second manager: " or "North coord: "
+    discord_message = "\n".join(
+        [
+            line
+            for line in shift_msg.split("\n")
+            if not line.startswith("Second manager: ")
+            and not line.startswith("North coord: ")
+        ]
+    )
+
+    if hasattr(args, "return_discord_message") and args.return_discord_message:
+        # print("Returning discord message")
+        return discord_message
+
     if args.groupme or args.gm_debug:
         gm = GroupMe(config.groupme, debug=args.debug, dev_bot=args.gm_debug)
         gm.post(args.message if args.message else shift_msg)
+    if args.discord or args.discord_debug:
+        channel_id = (
+            config.discord.test_channel_id
+            if args.discord_debug
+            else config.discord.main_channel_id
+        )
+        ds = SingleMessageClient(channel_id=channel_id, message=discord_message)
+        ds.run(config.discord.bot_token)
     if args.debug:
         utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
+        utils.cmdline.logger(f"Message for Discord:\n{discord_message}", level="debug")
 
 
 if __name__ == "__main__":
