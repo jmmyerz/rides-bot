@@ -13,5 +13,5 @@ class SingleMessageClient(discord.Client):
 
     async def on_ready(self):
         channel = self.get_channel(self.channel_id)
-        channel.send(self.message)
+        await channel.send(self.message)
         await self.close()
