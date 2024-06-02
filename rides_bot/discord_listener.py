@@ -44,7 +44,7 @@ class DiscordListener(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content == "refresh":
+        if message.content.lower().strip() == "refresh":
             if message.channel.id == self._conf.discord.test_channel_id:
                 args = Args()
                 args.discord_debug = True
