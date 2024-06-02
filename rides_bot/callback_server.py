@@ -29,6 +29,7 @@ def groupme():
     args.groupme = False
     if request.endpoint == "dev":
         args.gm_debug = True
+        args.debug = True
     elif request.endpoint == "prod":
         args.groupme = True
 
