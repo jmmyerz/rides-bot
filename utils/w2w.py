@@ -96,7 +96,7 @@ class Shift:
             "is_north_south_coord": r"^(?<!(?:shadow\s))(?P<which>north|south)(\s?(?=coord|coordinator)|$)",
         }
         _description_patterns_fuzzy = {
-            "is_manager_on": f"({description_regex['is_manager_on']}){{1s+2i+2d<=3}}",
+            "is_manager_on": f"({description_regex['is_manager_on']}){{2s+2i+2d<=3}}",
             "manager_on_times": f"({description_regex['manager_on_times']}){{1s+2i+2d<=3}}",
             "is_second_manager": f"({description_regex['is_second_manager']}){{1s+2i+2d<=3}}",
             "is_north_south_coord": f"({description_regex['is_north_south_coord']}){{1s+2i+2d<=3}}",
