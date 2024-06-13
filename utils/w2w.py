@@ -91,7 +91,7 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             "is_manager_on": r"(?:manager taking calls|manager on)",
-            "manager_on_times": r"(?:manager taking calls|manager on)(?>\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?>[\s-]+)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "manager_on_times": r"(?:manager taking calls|manager on)(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
             "is_second_manager": r"second manager",
             "is_north_south_coord": r"^(?<!(?:shadow\s))(?P<which>north|south)(\s?(?=coord|coordinator)|$)",
         }
