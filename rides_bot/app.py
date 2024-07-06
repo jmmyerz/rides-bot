@@ -8,6 +8,7 @@ from utils.config import Config
 from utils.w2w import W2WSession
 from utils.groupme import GroupMe
 from utils.discord import SingleMessageClient
+from utils.telegram import TelegramBot
 
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
 
@@ -273,8 +274,8 @@ def run_bot(args):
 
     shift_msg = "\n".join(build_message(operating_day_meta))
 
-    # The discord message should remove lines beginning with "Second manager: " or "North coord: "
-    discord_message = "\n".join(
+    # The south message should remove lines beginning with "Second manager: " or "North coord: "
+    south_message = "\n".join(
         [
             line
             for line in shift_msg.split("\n")
@@ -283,8 +284,24 @@ def run_bot(args):
         ]
     )
 
-    # Make a copy of discord_message for A910 gm
-    groupme_a910_message = discord_message
+    # The north message should remove lines beginning with "Second manager: " or "South coord: "
+    north_message = "\n".join(
+        [
+            line
+            for line in shift_msg.split("\n")
+            if not line.startswith("Second manager: ")
+            and not line.startswith("South coord: ")
+        ]
+    )
+
+    # Set both groupme_a910_message and discord_message to south_message
+    groupme_a910_message = discord_message = south_message
+
+    # Set telegram_message to north_message
+    telegram_message = north_message
+
+    # Remove the last line from the telegram message (temp until 'refresh' is implemented)
+    telegram_message = "\n".join(telegram_message.split("\n")[:-1])
 
     if hasattr(args, "return_discord_message") and args.return_discord_message:
         # print("Returning discord message")
@@ -307,6 +324,9 @@ def run_bot(args):
         )
         ds = SingleMessageClient(channel_id=channel_id, message=discord_message)
         ds.run(config.discord.bot_token)
+    if args.telegram12:
+        tb = TelegramBot(config)
+        tb.send(telegram_message, config.telegram.a12_chat_id)
     if args.debug:
         utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
         utils.cmdline.logger(f"Message for Discord:\n{discord_message}", level="debug")
