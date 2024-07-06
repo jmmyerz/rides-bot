@@ -87,4 +87,8 @@ if __name__ == "__main__":
             asyncio.run(listener.close())
         except Exception as e:
             print(f"Error: {e}")
+            stop_event.set()
             asyncio.run(listener.close())
+            sys.exit(1)
+        finally:
+            sys.exit(0)
