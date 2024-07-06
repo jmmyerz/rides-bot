@@ -1,12 +1,24 @@
-import discord, time
+import discord, sys, asyncio
 
-from threading import Thread
+# Add parent directory to sys.path so we can import utils
+sys.path.append("..")
+
+
+from threading import Event
 
 from utils.config import Config
 from rides_bot.app import run_bot, CONFIG_FILE_PATH
 
 intents = discord.Intents.default()
 intents.message_content = True
+
+
+def handle_sigterm(*args, **kwargs):
+    """
+    Handle SIGTERM signal, which will occur when this program runs as a systemd service.
+    Raises KeyboardInterrupt to stop the program as if it was stopped by a keyboard interrupt.
+    """
+    raise KeyboardInterrupt
 
 
 class Args:
@@ -26,11 +38,12 @@ class DiscordListener(discord.Client):
     def __init__(self):
         self._conf = Config().load(CONFIG_FILE_PATH)
         self.token = self._conf.discord.bot_token
+        self.args = Args()
 
         super().__init__(intents=intents)
 
-    def run(self):
-        super().run(self.token)
+    async def run(self):
+        await super().start(self.token)
 
     async def send_message(self, message, channel_id):
         channel = self.get_channel(channel_id)
@@ -46,18 +59,32 @@ class DiscordListener(discord.Client):
 
         if message.content.lower().strip() == "refresh":
             if message.channel.id == self._conf.discord.test_channel_id:
-                args = Args()
+                args = self.args
                 args.discord_debug = True
                 await self.send_message(run_bot(args), message.channel.id)
 
             elif message.channel.id == self._conf.discord.main_channel_id:
-                args = Args()
+                args = self.args
                 args.discord = True
                 await self.send_message(run_bot(args), message.channel.id)
+
+        if message.content.lower().strip() == "ping":
+            print("Pong!")
 
     async def close(self) -> None:
         return await super().close()
 
 
-listener = DiscordListener()
-listener.run()
+if __name__ == "__main__":
+    stop_event = Event()
+    listener = DiscordListener()
+
+    while not stop_event.is_set():
+        try:
+            asyncio.run(listener.run())
+        except KeyboardInterrupt:
+            stop_event.set()
+            asyncio.run(listener.close())
+        except Exception as e:
+            print(f"Error: {e}")
+            asyncio.run(listener.close())

@@ -1,0 +1,11 @@
+[Unit]
+Description=Discord Listener (rides-bot)
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /var/www/jordanmyers.me/rides-bot/rides_bot/discord_listener.py
+
+[Install]
+WantedBy=multi-user.target
