@@ -20,6 +20,7 @@ app = Flask(__name__)
 
 @app.post("/update/prod", endpoint="prod")
 @app.post("/update/dev", endpoint="dev")
+@app.post("/update/a910", endpoint="a910")
 def groupme():
     data = request.get_json()
     args = RuntimeArgs(config.gunicorn.rides_bot_args)
@@ -32,6 +33,8 @@ def groupme():
         args.debug = True
     elif request.endpoint == "prod":
         args.groupme = True
+    elif request.endpoint == "a910":
+        args.groupme910 = True
 
     date_pattern = r"analyze ((0[0-9]{1}|1[0-2]{1})\/([0-2]{1}[0-9]{1}|3[0-1]{1})\/20[1-3]{1}[0-9]{1})"
     message = data.__getitem__("text").lower().strip()

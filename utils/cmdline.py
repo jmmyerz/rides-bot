@@ -61,6 +61,13 @@ default_args = {
             "action": "store_true",
         },
     },
+    "groupme910": {
+        "flag": "9",
+        "help": "Sends output to groupme910",
+        "kwargs": {
+            "action": "store_true",
+        },
+    },
     "discord": {
         "flag": "s",
         "help": "Sends output to discord",

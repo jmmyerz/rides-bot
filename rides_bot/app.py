@@ -287,8 +287,13 @@ def run_bot(args):
         # print("Returning discord message")
         return discord_message
 
-    if args.groupme or args.gm_debug:
-        gm = GroupMe(config.groupme, debug=args.debug, dev_bot=args.gm_debug)
+    if args.groupme or args.gm_debug or args.groupme910:
+        gm = GroupMe(
+            config.groupme,
+            debug=args.debug,
+            dev_bot=args.gm_debug,
+            a910_bot=args.groupme910,
+        )
         gm.post(args.message if args.message else shift_msg)
     if args.discord or args.discord_debug:
         channel_id = (
