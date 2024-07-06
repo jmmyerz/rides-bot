@@ -283,6 +283,9 @@ def run_bot(args):
         ]
     )
 
+    # Make a copy of discord_message for A910 gm
+    groupme_a910_message = discord_message
+
     if hasattr(args, "return_discord_message") and args.return_discord_message:
         # print("Returning discord message")
         return discord_message
@@ -294,7 +297,8 @@ def run_bot(args):
             dev_bot=args.gm_debug,
             a910_bot=args.groupme910,
         )
-        gm.post(args.message if args.message else shift_msg)
+        _message = shift_msg if not args.groupme910 else groupme_a910_message
+        gm.post(args.message if args.message else _message)
     if args.discord or args.discord_debug:
         channel_id = (
             config.discord.test_channel_id
