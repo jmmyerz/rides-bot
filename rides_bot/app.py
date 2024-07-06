@@ -65,6 +65,12 @@ def run_bot(args):
 
     # Build the operating day meta dict
     operating_day_meta = shift_logic.build_operating_day_meta(filtered_shifts)
+    if args.debug:
+        utils.cmdline.logger(
+            "Operating day meta:\n"
+            + json.dumps(operating_day_meta, indent=2, cls=NestedJSONEncoder),
+            level="debug",
+        )
 
     # Build all the shift candidates
     for meta_shift_id, meta_shift in operating_day_meta["shifts"].items():
@@ -233,6 +239,7 @@ def run_bot(args):
                 outlist.append(
                     prefixes["manager_on"]
                     + max(shift["managers_on"], key=lambda s: s["score"])["name"]
+                    + ("*" if "duplicate" in shift and shift["duplicate"] else "")
                 )
             if "second_managers" in shift and len(shift["second_managers"]) > 0:
                 outlist.append(
@@ -249,6 +256,10 @@ def run_bot(args):
                     prefixes["south"]
                     + max(shift["south_coords"], key=lambda s: s["score"])["name"]
                 )
+
+        if "errors" in shifts and len(shifts["errors"]) > 0:
+            outlist.extend([""])
+            outlist.extend([f"*{error}" for error in shifts["errors"]])
 
         outlist.extend(
             [

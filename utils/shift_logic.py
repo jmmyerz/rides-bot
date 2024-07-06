@@ -149,9 +149,18 @@ def determine_shift(
 def build_operating_day_meta(filtered_shifts: dict) -> dict:
     # There will probably not be a manager on double, so it's safe to assume if we only find one manager on, there's one shift
     # Build the operating day shift times based on manager on shifts
+
+    # Check number of managers in case we have a mistake
+    managers_on = len(filtered_shifts["managers_on"])
+    errors = []
+
+    if managers_on > 2:
+        managers_on = 2
+
     operating_day_meta = {
-        "detected_shifts": len(filtered_shifts["managers_on"]),
-        "shifts": {i: {} for i in range(len(filtered_shifts["managers_on"]))},
+        "detected_shifts": managers_on,
+        "shifts": {i: {} for i in range(managers_on)},
+        "errors": errors,
     }
     for shift in filtered_shifts["managers_on"]:
         if type(shift.manager_on_times["start_time"]) == datetime.time:
@@ -188,14 +197,21 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
             _meta_shift,
         ) = determine_shift(operating_day_meta, shift, m_start, m_end)
 
-        # Add times and positions to the operating day meta
-        operating_day_meta["shifts"][shift_id] = {
-            "shift_times": {
-                "start": corrected_m_start,
-                "end": corrected_m_end,
-            },
-            "managers_on": [],
-        }
+        # If the shift is already filled, mark as duplicate
+        if operating_day_meta["shifts"][shift_id] != {}:
+            operating_day_meta["shifts"][shift_id]["duplicate"] = True
+            operating_day_meta["errors"].append(
+                "Multiple managers scheduled for this shift. Result may be inaccurate."
+            )
+        else:
+            # Add times and positions to the operating day meta
+            operating_day_meta["shifts"][shift_id] = {
+                "shift_times": {
+                    "start": corrected_m_start,
+                    "end": corrected_m_end,
+                },
+                "managers_on": [],
+            }
         if len(filtered_shifts["second_managers"]) > 0:
             operating_day_meta["shifts"][shift_id].__setitem__("second_managers", [])
         if len(filtered_shifts["north_coords"]) > 0:
