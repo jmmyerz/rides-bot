@@ -300,12 +300,13 @@ def run_bot(args):
     # Set telegram_message to north_message
     telegram_message = north_message
 
-    # Remove the last line from the telegram message (temp until 'refresh' is implemented)
-    telegram_message = "\n".join(telegram_message.split("\n")[:-1])
-
     if hasattr(args, "return_discord_message") and args.return_discord_message:
         # print("Returning discord message")
         return discord_message
+
+    if hasattr(args, "return_telegram_message") and args.return_telegram_message:
+        # print("Returning telegram message")
+        return telegram_message
 
     if args.groupme or args.gm_debug or args.groupme910:
         gm = GroupMe(
@@ -314,8 +315,11 @@ def run_bot(args):
             dev_bot=args.gm_debug,
             a910_bot=args.groupme910,
         )
-        _message = shift_msg if not args.groupme910 else groupme_a910_message
-        gm.post(args.message if args.message else _message)
+        _messages = {
+            "main": shift_msg,
+            "a910": groupme_a910_message,
+        }
+        gm.post(args.message if args.message else _messages)
     if args.discord or args.discord_debug:
         channel_id = (
             config.discord.test_channel_id
@@ -324,9 +328,16 @@ def run_bot(args):
         )
         ds = SingleMessageClient(channel_id=channel_id, message=discord_message)
         ds.run(config.discord.bot_token)
-    if args.telegram12:
+    if args.telegram12 or args.telegram_debug:
         tb = TelegramBot(config)
-        tb.send(telegram_message, config.telegram.a12_chat_id)
+        tb.send(
+            telegram_message,
+            (
+                config.telegram.a12_chat_id
+                if args.telegram12
+                else config.telegram.test_chat_id
+            ),
+        )
     if args.debug:
         utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
         utils.cmdline.logger(f"Message for Discord:\n{discord_message}", level="debug")

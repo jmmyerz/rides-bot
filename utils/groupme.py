@@ -22,25 +22,37 @@ class GroupMe:
         _bot_id = None
         if self._dev_bot:
             _bot_id = self._gmconf.dev_bot_id
-        elif self._a910_bot:
-            _bot_id = self._gmconf.a910_bot_id
-        else:
-            _bot_id = self._gmconf.bot_id
-
-        msg_data = {
-            "bot_id": (_bot_id if _bot_id is not None else self._gmconf.bot_id),
-            "text": message,
-        }
-
-        resp = requests.post(
-            "https://api.groupme.com/v3/bots/post", json.dumps(msg_data)
-        )
-        if self._debug:
-            cmdline.logger(
-                f"GroupMe response: [Status {resp.status_code} {resp.reason}]",
-                level="debug",
+            _request(
+                {
+                    "bot_id": _bot_id,
+                    "text": message["main"],
+                }
             )
-        return True if resp.status_code == 200 else False
+        if self._a910_bot:
+            _request(
+                {
+                    "bot_id": self._gmconf.a910_bot_id,
+                    "text": message["a910"],
+                }
+            )
+
+        def _request(data):
+            resp = requests.post(
+                "https://api.groupme.com/v3/bots/post", json.dumps(data)
+            )
+            if self._debug:
+                cmdline.logger(
+                    f"GroupMe response: [Status {resp.status_code} {resp.reason}]",
+                    level="debug",
+                )
+            return True if resp.status_code == 200 else False
+
+        return _request(
+            {
+                "bot_id": self._gmconf.bot_id,
+                "text": message["main"],
+            }
+        )
 
 
 # Debug when run from command line
