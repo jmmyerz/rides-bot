@@ -75,6 +75,13 @@ default_args = {
             "action": "store_true",
         },
     },
+    "discord_debug": {
+        "flag": "S",
+        "help": "Sends output to discord debug channel",
+        "kwargs": {
+            "action": "store_true",
+        },
+    },
     "telegram12": {
         "flag": "t",
         "help": "Sends output to telegram a12",
@@ -82,9 +89,9 @@ default_args = {
             "action": "store_true",
         },
     },
-    "discord_debug": {
-        "flag": "S",
-        "help": "Sends output to discord debug channel",
+    "telegram_debug": {
+        "flag": "T",
+        "help": "Sends output to telegram debug",
         "kwargs": {
             "action": "store_true",
         },
