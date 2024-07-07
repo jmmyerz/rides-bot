@@ -20,6 +20,18 @@ class GroupMe:
 
     def post(self, message) -> bool:
         _bot_id = None
+
+        def _request(data):
+            resp = requests.post(
+                "https://api.groupme.com/v3/bots/post", json.dumps(data)
+            )
+            if self._debug:
+                cmdline.logger(
+                    f"GroupMe response: [Status {resp.status_code} {resp.reason}]",
+                    level="debug",
+                )
+            return True if resp.status_code == 200 else False
+
         if self._dev_bot:
             _bot_id = self._gmconf.dev_bot_id
             _request(
@@ -35,17 +47,6 @@ class GroupMe:
                     "text": message["a910"],
                 }
             )
-
-        def _request(data):
-            resp = requests.post(
-                "https://api.groupme.com/v3/bots/post", json.dumps(data)
-            )
-            if self._debug:
-                cmdline.logger(
-                    f"GroupMe response: [Status {resp.status_code} {resp.reason}]",
-                    level="debug",
-                )
-            return True if resp.status_code == 200 else False
 
         return _request(
             {
