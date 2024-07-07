@@ -28,6 +28,7 @@ def groupme():
     # Quick and dirty handling of where the bot posts
     args.gm_debug = False
     args.groupme = False
+    args.groupme910 = False
     if request.endpoint == "dev":
         args.gm_debug = True
         args.debug = True

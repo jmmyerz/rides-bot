@@ -312,6 +312,7 @@ def run_bot(args):
         gm = GroupMe(
             config.groupme,
             debug=args.debug,
+            main_bot=args.groupme,
             dev_bot=args.gm_debug,
             a910_bot=args.groupme910,
         )

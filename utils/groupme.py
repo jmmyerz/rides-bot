@@ -10,11 +10,13 @@ class GroupMe:
         self,
         gmconf: Config,
         debug: bool = False,
+        main_bot: bool = False,
         dev_bot: bool = False,
         a910_bot: bool = False,
     ):
         self._gmconf = gmconf
         self._debug = debug
+        self._main_bot = main_bot
         self._dev_bot = dev_bot
         self._a910_bot = a910_bot
 
@@ -48,12 +50,15 @@ class GroupMe:
                 }
             )
 
-        return _request(
-            {
-                "bot_id": self._gmconf.bot_id,
-                "text": message["main"],
-            }
-        )
+        if self._main_bot:
+            _request(
+                {
+                    "bot_id": self._gmconf.bot_id,
+                    "text": message["main"],
+                }
+            )
+
+        return True
 
 
 # Debug when run from command line
