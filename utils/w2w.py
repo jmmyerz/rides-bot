@@ -1,5 +1,5 @@
 import datetime, json, regex as re
-import requests, requests.cookies, requests.utils
+import requests, requests.cookies, requests.utils, html
 
 from . import cmdline
 from .nested_json import NestedJSONEncoder
@@ -359,10 +359,14 @@ class W2WSession:
         )
         resp = self._session.get(url_string)
 
+        ### IMPORTANT ###
+        # Unescape the resp.text otherwise names with special characters will break the regex
+        unescaped_text = html.unescape(resp.text)
+
         # W2W returns no structure, but places all the shifts inside some javascript
         # We need to parse out the assigned shifts wrapped in the "swl();" functions
         # swl("380352058",2,"#000000","Jordan Myers","750227705","3pm - 10pm","   7.0 hours","North Coord")
-        swl_data = re.findall(_schedule_regex["swl"], resp.text)
+        swl_data = re.findall(_schedule_regex["swl"], unescaped_text)
 
         # Pull out the relevant data
         for shift in swl_data:
