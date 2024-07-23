@@ -1,9 +1,3 @@
-# Check if the script is being run as root
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
-  exit
-fi
-
 # Set pwd to the directory of this script and run `gh repo sync`
 # to update the bot with the latest changes from the repository.
 cd "$(dirname "$0")" || exit
@@ -14,8 +8,8 @@ gh repo sync
 pkill -f "rides_bot.callback_server:app"
 
 # Restart the discord_listener and telegram_listener services
-systemctl restart discord_listener
-systemctl restart telegram_listener
+sudo systemctl restart discord_listener
+sudo systemctl restart telegram_listener
 
 # Restart the callback_server service
 # Need to add this script's directory to PYTHONPATH
