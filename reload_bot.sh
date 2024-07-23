@@ -1,3 +1,9 @@
+# Check if the script is being run as root
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
 # Set pwd to the directory of this script and run `gh repo sync`
 # to update the bot with the latest changes from the repository.
 cd "$(dirname "$0")" || exit
