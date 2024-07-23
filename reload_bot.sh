@@ -11,10 +11,12 @@ pkill -f "rides_bot.callback_server:app"
 sudo systemctl restart discord_listener
 sudo systemctl restart telegram_listener
 
-# Restart the callback_server service
+# Restart the callback_server service, redirecting output to /dev/null
 # Need to add this script's directory to PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$PWD
-gunicorn rides_bot.callback_server:app -b 127.0.0.1:7045 &
+gunicorn rides_bot.callback_server:app -b 127.0.0.1:7045 &>/dev/null &
+# Disown the process
+disown
 
 # Get the status of the services and print them
 systemctl status discord_listener
