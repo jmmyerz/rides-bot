@@ -366,13 +366,17 @@ class W2WSession:
         # W2W returns no structure, but places all the shifts inside some javascript
         # We need to parse out the assigned shifts wrapped in the "swl();" functions
         # swl("380352058",2,"#000000","Jordan Myers","750227705","3pm - 10pm","   7.0 hours","North Coord")
+        # TODO: determine identifiers for each piece of data
         swl_data = re.findall(_schedule_regex["swl"], unescaped_text)
 
         # Pull out the relevant data
         for shift in swl_data:
             parsed = re.findall(_schedule_regex["shift_data"], shift)
             obj = Shift(
-                employee=parsed[3],
+                # employee=parsed[3],
+                # Employee name needs to have any asterisks and leading/trailing whitespace removed
+                # TODO: Use the Employee class
+                employee=re.sub(r"^\s+|\s+$", "", re.sub(r"\*", "", parsed[3])),
                 start_time=re.findall(_schedule_regex["shift_time"], parsed[5])[0],
                 end_time=re.findall(_schedule_regex["shift_time"], parsed[5])[1],
                 total_hours=re.findall(_schedule_regex["total_hours"], parsed[6])[0],
