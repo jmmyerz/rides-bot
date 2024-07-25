@@ -68,6 +68,13 @@ default_args = {
             "action": "store_true",
         },
     },
+    "groupme_north": {
+        "flag": "n",
+        "help": "Sends output to groupme north",
+        "kwargs": {
+            "action": "store_true",
+        },
+    },
     "discord": {
         "flag": "s",
         "help": "Sends output to discord",

@@ -13,12 +13,14 @@ class GroupMe:
         main_bot: bool = False,
         dev_bot: bool = False,
         a910_bot: bool = False,
+        north_bot: bool = False,
     ):
         self._gmconf = gmconf
         self._debug = debug
         self._main_bot = main_bot
         self._dev_bot = dev_bot
         self._a910_bot = a910_bot
+        self._north_bot = north_bot
 
     def post(self, message) -> bool:
         _bot_id = None
@@ -47,6 +49,14 @@ class GroupMe:
                 {
                     "bot_id": self._gmconf.a910_bot_id,
                     "text": message["a910"],
+                }
+            )
+
+        if self._north_bot:
+            _request(
+                {
+                    "bot_id": self._gmconf.north_bot_id,
+                    "text": message["north"],
                 }
             )
 

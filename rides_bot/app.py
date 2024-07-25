@@ -308,17 +308,19 @@ def run_bot(args):
         # print("Returning telegram message")
         return telegram_message
 
-    if args.groupme or args.gm_debug or args.groupme910:
+    if args.groupme or args.gm_debug or args.groupme910 or args.groupme_north:
         gm = GroupMe(
             config.groupme,
             debug=args.debug,
             main_bot=args.groupme,
             dev_bot=args.gm_debug,
             a910_bot=args.groupme910,
+            north_bot=args.groupme_north,
         )
         _messages = {
             "main": shift_msg,
             "a910": groupme_a910_message,
+            "north": north_message,
         }
         gm.post(args.message if args.message else _messages)
     if args.discord or args.discord_debug:
