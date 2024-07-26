@@ -24,6 +24,12 @@ def linktest(string):
     return string
 
 
+# GET route that redirects to /l/<string>
+@app.route("/r/<string>")
+def redirect(string):
+    return redirect(f"/l/{string}")
+
+
 @app.post("/update/prod", endpoint="prod")
 @app.post("/update/dev", endpoint="dev")
 @app.post("/update/a910", endpoint="a910")
