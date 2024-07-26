@@ -21,7 +21,18 @@ app = Flask(__name__)
 # GET route /l/<string> for testing
 @app.route("/l/<string>")
 def linktest(string):
-    return string
+    return f"""
+    <html lang=en>
+        <head>
+            <meta property="og:title" content="Rides Bot" />
+            <meta property="og:type" content="website" />
+            <title>Rides Bot</title>
+        </head>
+        <body>
+            {string}
+        </body>
+    </html>
+    """
 
 
 # GET route that redirects to /l/<string>
