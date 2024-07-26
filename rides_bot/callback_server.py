@@ -18,6 +18,12 @@ class RuntimeArgs(object):
 app = Flask(__name__)
 
 
+# GET route /l/<string> for testing
+@app.route("/l/<string>")
+def linktest(string):
+    return string
+
+
 @app.post("/update/prod", endpoint="prod")
 @app.post("/update/dev", endpoint="dev")
 @app.post("/update/a910", endpoint="a910")
