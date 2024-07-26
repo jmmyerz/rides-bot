@@ -1,5 +1,5 @@
 import re
-from flask import Flask, Response, request
+from flask import Flask, Response, request, redirect
 
 from utils.config import Config
 from .app import run_bot, CONFIG_FILE_PATH
@@ -26,7 +26,7 @@ def linktest(string):
 
 # GET route that redirects to /l/<string>
 @app.route("/r/<string>")
-def redirect(string):
+def redirecttest(string):
     return redirect(f"/l/{string}")
 
 
