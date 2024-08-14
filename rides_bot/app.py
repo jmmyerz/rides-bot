@@ -13,6 +13,10 @@ from utils.telegram import TelegramBot
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
 
 
+class NoShiftsDetectedError(Exception):
+    pass
+
+
 def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
 
@@ -210,6 +214,10 @@ def run_bot(args):
             "south": "South coord: ",
         }
 
+        if not len(shifts["shifts"]):
+            # No shifts detected, no need to continue
+            raise NoShiftsDetectedError
+
         if args.date:
             message_date = datetime.datetime.strptime(args.date, "%m/%d/%Y")
         else:
@@ -272,7 +280,15 @@ def run_bot(args):
 
         return outlist
 
-    shift_msg = "\n".join(build_message(operating_day_meta))
+    try:
+        shift_msg = "\n".join(build_message(operating_day_meta))
+    except NoShiftsDetectedError:
+        if args.debug:
+            utils.cmdline.logger(
+                "No shifts detected, exiting",
+                level="debug",
+            )
+        return
 
     # The south message should remove lines beginning with "Second manager: " or "North coord: "
     south_message = "\n".join(
