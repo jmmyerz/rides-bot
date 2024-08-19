@@ -129,6 +129,10 @@ def determine_shift(
             difference = abs(shift.end_time.hour - m_end.hour)
             score -= get_variance(shift.end_time, m_end) * 10
 
+        # If the start time of the shift is within 2h of the meta shift end time, disqualify
+        if abs(shift.start_time.hour - m_end.hour) <= 2:
+            score -= 1500
+
     # Score the shift based on the variance between the shift start and manager on start times
     # score -= get_variance(shift.start_time, m_start) * 10
 

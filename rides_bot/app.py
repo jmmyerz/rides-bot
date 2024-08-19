@@ -70,6 +70,14 @@ def run_bot(args):
 
     # Build the operating day meta dict
     operating_day_meta = shift_logic.build_operating_day_meta(filtered_shifts)
+
+    # If there are 2 shifts, the end time of the first shift should be the start time of the second shift
+    # TODO: make this easier to read
+    if len(operating_day_meta["shifts"]) == 2:
+        operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
+            "shifts"
+        ][1]["shift_times"]["start"]
+
     if args.debug:
         utils.cmdline.logger(
             "Operating day meta:\n"
@@ -132,6 +140,9 @@ def run_bot(args):
                     ),
                     level="debug",
                 )
+            if shift_scored[3] <= -1000:
+                # If the score is less than -1000, it was disqualified
+                continue
             meta_shift["second_managers"].append(
                 {
                     "name": shift.employee,
@@ -162,6 +173,9 @@ def run_bot(args):
                     ),
                     level="debug",
                 )
+            if shift_scored[3] <= -1000:
+                # If the score is less than -1000, it was disqualified
+                continue
             meta_shift["north_coords"].append(
                 {
                     "name": shift.employee,
@@ -192,6 +206,9 @@ def run_bot(args):
                     ),
                     level="debug",
                 )
+            if shift_scored[3] <= -1000:
+                # If the score is less than -1000, it was disqualified
+                continue
             meta_shift["south_coords"].append(
                 {
                     "name": shift.employee,
