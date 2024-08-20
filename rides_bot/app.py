@@ -260,7 +260,26 @@ def run_bot(args):
 
         for shift_id, shift in shifts["shifts"].items():
             if shifts["detected_shifts"] == 2:
-                outlist.append("First shift:" if shift_id == 0 else "\nSecond shift:")
+                time_fmts = ("%-I:%M%p", "%-I%p")
+
+                # Extract the start and end times of the shift and format them
+                start_time = shift["shift_times"]["start"].strftime(
+                    time_fmts[0]
+                    if shift["shift_times"]["start"].minute != 0
+                    else time_fmts[1]
+                )
+                end_time = shift["shift_times"]["end"].strftime(
+                    time_fmts[0]
+                    if shift["shift_times"]["end"].minute != 0
+                    else time_fmts[1]
+                )
+
+                # Prefix determination
+                prefix = "" if shift_id == 0 else "\n"
+
+                outlist.append(
+                    f"{prefix}From {start_time.lower()} to {end_time.lower()}:"
+                )
             if "managers_on" in shift and len(shift["managers_on"]) > 0:
                 outlist.append(
                     prefixes["manager_on"]
