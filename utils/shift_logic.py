@@ -179,13 +179,29 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
                 shift.manager_on_times["end_time"], "%I:%M"
             ).time()
 
-            # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
-            # Otherwise, if start hour - end hour is positive, only the end time should probably be pm, so change to 24h time equivalent
-            if m_start.hour - m_end.hour < 0:
+        ### OLD LOGIC... need to debug or remove
+        # If start hour - end hour is negative, the start and end time should probably be pm, so change to 24h time equivalent
+        # Otherwise, if start hour - end hour is positive, only the end time should probably be pm, so change to 24h time equivalent
+        # if m_start.hour - m_end.hour < 0:
+        #    if m_start.hour < 12:
+        #        m_start = m_start.replace(hour=m_start.hour + 12)
+        #    if m_end.hour < 12:
+        #        m_end = m_end.replace(hour=m_end.hour + 12)
+        # else:
+        #    # 12am should be the only acceptable time to not be pm
+        #    if m_end.hour == 12:
+        #        m_end = m_end.replace(hour=0)
+        #    elif m_end.hour < 12:
+        #        m_end = m_end.replace(hour=m_end.hour + 12)
+
+        # If start hour - end hour is negative, the start time should be PM if it falls between 1 and 6 inclusive
+        if m_start.hour - m_end.hour < 0:
+            if 1 <= m_start.hour <= 6:
                 m_start = m_start.replace(hour=m_start.hour + 12)
-                m_end = m_end.replace(hour=m_end.hour + 12)
-            else:
-                m_end = m_end.replace(hour=m_end.hour + 12)
+        # Shifts currently always end in the PM, except maybe 12am
+        if m_end.hour <= 12:
+            factor = 12 if m_end.hour != 12 else 0
+            m_end = m_end.replace(hour=m_end.hour + factor)
 
         # Change these hours in the shift meta
         shift.manager_on_times = {

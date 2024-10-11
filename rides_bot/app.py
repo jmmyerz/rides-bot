@@ -74,6 +74,7 @@ def run_bot(args):
     # If there are 2 shifts, the end time of the first shift should be the start time of the second shift
     # TODO: make this easier to read
     if len(operating_day_meta["shifts"]) == 2:
+        print(f"Operating day meta: {operating_day_meta}")
         operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
             "shifts"
         ][1]["shift_times"]["start"]
