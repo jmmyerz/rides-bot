@@ -361,42 +361,82 @@ def run_bot(args):
         # print("Returning telegram message")
         return telegram_message
 
-    if args.groupme or args.gm_debug or args.groupme910 or args.groupme_north:
-        gm = GroupMe(
-            config.groupme,
-            debug=args.debug,
-            main_bot=args.groupme,
-            dev_bot=args.gm_debug,
-            a910_bot=args.groupme910,
-            north_bot=args.groupme_north,
+    def _send_messages(messages: dict):
+        if args.groupme or args.gm_debug or args.groupme910 or args.groupme_north:
+            gm = GroupMe(
+                config.groupme,
+                debug=args.debug,
+                main_bot=args.groupme,
+                dev_bot=args.gm_debug,
+                a910_bot=args.groupme910,
+                north_bot=args.groupme_north,
+            )
+            _messages = {
+                "main": messages["shift_msg"],
+                "a910": messages["groupme_a910_message"],
+                "north": messages["north_message"],
+            }
+            gm.post(args.message if args.message else _messages)
+        if args.discord or args.discord_debug:
+            channel_id = (
+                config.discord.test_channel_id
+                if args.discord_debug
+                else config.discord.main_channel_id
+            )
+            ds = SingleMessageClient(
+                channel_id=channel_id, message=messages["discord_message"]
+            )
+            ds.run(config.discord.bot_token)
+        if args.telegram12 or args.telegram_debug:
+            tb = TelegramBot(config)
+            tb.send(
+                messages["telegram_message"],
+                (
+                    config.telegram.a12_chat_id
+                    if args.telegram12
+                    else config.telegram.test_chat_id
+                ),
+            )
+
+    def _print_messages_debug():
+        if args.debug:
+            utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
+            utils.cmdline.logger(
+                f"Message for Discord:\n{discord_message}", level="debug"
+            )
+
+    ####### EOS 2024 #######
+    # TODO: Move this to something that pulls a special schedule from YAML and returns early
+    #       instead of only executing after whentowork has been polled
+
+    # Check if today is EOS 2024 (November 4)
+    if datetime.datetime.now().date() == datetime.datetime(2024, 11, 4).date():
+        message = "Thanks for a great season. See you in 2025! 🎢🎉"
+        _send_messages(
+            {
+                "shift_msg": message,
+                "groupme_a910_message": message,
+                "discord_message": message,
+                "north_message": message,
+                "telegram_message": message,
+            }
         )
-        _messages = {
-            "main": shift_msg,
-            "a910": groupme_a910_message,
-            "north": north_message,
+        _print_messages_debug()
+        return
+    # Check if today is after EOS 2024 (November 4)
+    elif datetime.datetime.now().date() > datetime.datetime(2024, 11, 4).date():
+        return
+
+    _send_messages(
+        {
+            "shift_msg": shift_msg,
+            "groupme_a910_message": groupme_a910_message,
+            "discord_message": discord_message,
+            "north_message": north_message,
+            "telegram_message": telegram_message,
         }
-        gm.post(args.message if args.message else _messages)
-    if args.discord or args.discord_debug:
-        channel_id = (
-            config.discord.test_channel_id
-            if args.discord_debug
-            else config.discord.main_channel_id
-        )
-        ds = SingleMessageClient(channel_id=channel_id, message=discord_message)
-        ds.run(config.discord.bot_token)
-    if args.telegram12 or args.telegram_debug:
-        tb = TelegramBot(config)
-        tb.send(
-            telegram_message,
-            (
-                config.telegram.a12_chat_id
-                if args.telegram12
-                else config.telegram.test_chat_id
-            ),
-        )
-    if args.debug:
-        utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
-        utils.cmdline.logger(f"Message for Discord:\n{discord_message}", level="debug")
+    )
+    _print_messages_debug()
 
 
 if __name__ == "__main__":
