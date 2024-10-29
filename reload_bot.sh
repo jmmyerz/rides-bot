@@ -14,7 +14,7 @@ sudo systemctl restart telegram_listener
 # Restart the callback_server service, redirecting output to /dev/null
 # Need to add this script's directory to PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$PWD
-gunicorn rides_bot.callback_server:app -b 127.0.0.1:7045 &>/dev/null &
+/usr/bin/python3.11 gunicorn rides_bot.callback_server:app -b 127.0.0.1:7045 &>/dev/null &
 # Disown the process
 disown
 
