@@ -19,6 +19,7 @@ class NoShiftsDetectedError(Exception):
 
 def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
+    _no_shifts_flag = False
 
     if args.login:
         session = W2WSession(config.whentowork, debug=args.debug)
@@ -325,41 +326,42 @@ def run_bot(args):
                 "No shifts detected, exiting",
                 level="debug",
             )
-        return
+        _no_shifts_flag = True
 
-    # The south message should remove lines beginning with "Second manager: " or "North coord: "
-    south_message = "\n".join(
-        [
-            line
-            for line in shift_msg.split("\n")
-            if not line.startswith("Second manager: ")
-            and not line.startswith("North coord: ")
-        ]
-    )
+    if not _no_shifts_flag:
+        # The south message should remove lines beginning with "Second manager: " or "North coord: "
+        south_message = "\n".join(
+            [
+                line
+                for line in shift_msg.split("\n")
+                if not line.startswith("Second manager: ")
+                and not line.startswith("North coord: ")
+            ]
+        )
 
-    # The north message should remove lines beginning with "Second manager: " or "South coord: "
-    north_message = "\n".join(
-        [
-            line
-            for line in shift_msg.split("\n")
-            if not line.startswith("Second manager: ")
-            and not line.startswith("South coord: ")
-        ]
-    )
+        # The north message should remove lines beginning with "Second manager: " or "South coord: "
+        north_message = "\n".join(
+            [
+                line
+                for line in shift_msg.split("\n")
+                if not line.startswith("Second manager: ")
+                and not line.startswith("South coord: ")
+            ]
+        )
 
-    # Set both groupme_a910_message and discord_message to south_message
-    groupme_a910_message = discord_message = south_message
+        # Set both groupme_a910_message and discord_message to south_message
+        groupme_a910_message = discord_message = south_message
 
-    # Set telegram_message to north_message
-    telegram_message = north_message
+        # Set telegram_message to north_message
+        telegram_message = north_message
 
-    if hasattr(args, "return_discord_message") and args.return_discord_message:
-        # print("Returning discord message")
-        return discord_message
+        if hasattr(args, "return_discord_message") and args.return_discord_message:
+            # print("Returning discord message")
+            return discord_message
 
-    if hasattr(args, "return_telegram_message") and args.return_telegram_message:
-        # print("Returning telegram message")
-        return telegram_message
+        if hasattr(args, "return_telegram_message") and args.return_telegram_message:
+            # print("Returning telegram message")
+            return telegram_message
 
     def _send_messages(messages: dict):
         if args.groupme or args.gm_debug or args.groupme910 or args.groupme_north:
@@ -410,7 +412,11 @@ def run_bot(args):
     #       instead of only executing after whentowork has been polled
 
     # Check if today is EOS 2024 (November 4)
-    if datetime.datetime.now().date() == datetime.datetime(2024, 11, 4).date():
+    _run_against_date = datetime.datetime.now().date()
+    if args.date:
+        _run_against_date = datetime.datetime.strptime(args.date, "%m/%d/%Y").date()
+
+    if _run_against_date == datetime.datetime(2024, 11, 4).date():
         message = "Thanks for a great season. See you in 2025! 🎢🎉"
         _send_messages(
             {
@@ -421,22 +427,24 @@ def run_bot(args):
                 "telegram_message": message,
             }
         )
-        _print_messages_debug()
+        if args.debug:
+            utils.cmdline.logger(f"Special message:\n{message}", level="debug")
         return
     # Check if today is after EOS 2024 (November 4)
-    elif datetime.datetime.now().date() > datetime.datetime(2024, 11, 4).date():
+    elif _run_against_date > datetime.datetime(2024, 11, 4).date():
         return
 
-    _send_messages(
-        {
-            "shift_msg": shift_msg,
-            "groupme_a910_message": groupme_a910_message,
-            "discord_message": discord_message,
-            "north_message": north_message,
-            "telegram_message": telegram_message,
-        }
-    )
-    _print_messages_debug()
+    if not _no_shifts_flag:
+        _send_messages(
+            {
+                "shift_msg": shift_msg,
+                "groupme_a910_message": groupme_a910_message,
+                "discord_message": discord_message,
+                "north_message": north_message,
+                "telegram_message": telegram_message,
+            }
+        )
+        _print_messages_debug()
 
 
 if __name__ == "__main__":
