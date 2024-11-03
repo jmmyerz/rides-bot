@@ -7,7 +7,7 @@ User=jmyers
 Type=simple
 Restart=always
 Environment=PYTHONPATH=/var/www/jordanmyers.me/rides-bot/
-ExecStart=/usr/bin/python3 /var/www/jordanmyers.me/rides-bot/rides_bot/telegram_listener.py
+ExecStart=/usr/bin/python3.11 /var/www/jordanmyers.me/rides-bot/rides_bot/telegram_listener.py
 
 [Install]
 WantedBy=multi-user.target
