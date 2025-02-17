@@ -430,9 +430,11 @@ def run_bot(args):
         if args.debug:
             utils.cmdline.logger(f"Special message:\n{message}", level="debug")
         return
+
     # Check if today is after EOS 2024 (November 4)
-    elif _run_against_date > datetime.datetime(2024, 11, 4).date():
-        return
+    # TODO: See above... but this is being commented out for now so we can start running the bot for 2025
+    # elif _run_against_date > datetime.datetime(2024, 11, 4).date():
+    #    return
 
     if not _no_shifts_flag:
         _send_messages(
