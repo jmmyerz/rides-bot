@@ -31,11 +31,33 @@ def determine_shift(
         return (0, m_start, m_end, 100, shift)
 
     if True:
+        _tmp_score = score
+        _tmp_time_in_desc = False
 
         if hasattr(shift, "_manager_start"):
             score -= get_variance(shift._manager_start, m_start) * 10
+            _tmp_time_in_desc = True
         if hasattr(shift, "_manager_end"):
             score -= get_variance(shift._manager_end, m_end) * 10
+            _tmp_time_in_desc = True
+
+        if hasattr(shift, "_second_manager_start"):
+            score -= get_variance(shift._second_manager_start, m_start) * 10
+            _tmp_time_in_desc = True
+        if hasattr(shift, "_second_manager_end"):
+            score -= get_variance(shift._second_manager_end, m_end) * 10
+            _tmp_time_in_desc = True
+
+        if hasattr(shift, "_north_south_coord_start"):
+            score -= get_variance(shift._north_south_coord_start, m_start) * 10
+            _tmp_time_in_desc = True
+        if hasattr(shift, "_north_south_coord_end"):
+            score -= get_variance(shift._north_south_coord_end, m_end) * 10
+            _tmp_time_in_desc = True
+
+        # If score wasn't changed here, the description times were an exact match and we should boost the score
+        if _tmp_time_in_desc and _tmp_score == score:
+            score += 100
 
         ### This set covers both correct descriptions and double shifts with a single manager on time block
         # Matches e.g. a start time of 8 and a manager time of 8-3
@@ -102,7 +124,7 @@ def determine_shift(
             id_times = 1, shift.start_time, shift.end_time
             difference = abs(shift.start_time.hour - m_start.hour)
             score -= get_variance(shift.start_time, m_start) * 10
-        # Matches e.g. an end time of 15 amd a mislabeled manager time of 3-10
+        # Matches e.g. an end time of 15 and a mislabeled manager time of 3-10
         if (
             not matching_end(shift, m_end)
             and shift.end_time.hour <= 17

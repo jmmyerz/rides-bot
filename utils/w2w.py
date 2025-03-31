@@ -32,13 +32,35 @@ class Shift:
         self.description = description
 
         if self.is_manager_on:
-            times = self._get_manager_times()
+            times = self._get_manager_on_times()
             if len(times) > 0:
                 self._manager_start = times["start_time"]
                 self._manager_end = times["end_time"]
             else:
                 self._manager_start = self.start_time
                 self._manager_end = self.end_time
+
+        if self.is_second_manager:
+            times = self._get_description_times(
+                "second_manager_times", self.is_second_manager
+            )
+            if len(times) > 0:
+                self._second_manager_start = times["start_time"]
+                self._second_manager_end = times["end_time"]
+            else:
+                self._second_manager_start = self.start_time
+                self._second_manager_end = self.end_time
+
+        if self.is_north_south_coord:
+            times = self._get_description_times(
+                "north_south_coord_times", self.is_north_south_coord
+            )
+            if len(times) > 0:
+                self._north_south_coord_start = times["start_time"]
+                self._north_south_coord_end = times["end_time"]
+            else:
+                self._north_south_coord_start = self.start_time
+                self._north_south_coord_end = self.end_time
 
     def __iter__(self):
         dict = {
@@ -58,8 +80,11 @@ class Shift:
         }
         if self.is_manager_on:
             dict["meta"] |= {"manager_on_times": self.manager_on_times}
+        if self.is_second_manager:
+            dict["meta"] |= {"second_manager_times": self.second_manager_times}
         if self.is_north_south_coord:
             dict["meta"] |= {"coord_area": self.coord_area}
+            dict["meta"] |= {"north_south_coord_times": self.north_south_coord_times}
 
         yield from dict.items()
 
@@ -91,26 +116,33 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             "is_manager_on": r"(?:manager taking calls|manager on)",
-            "manager_on_times": r"(?:manager taking calls|manager on)(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
-            "is_second_manager": r"second manager",
-            "is_north_south_coord": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator)|$)",
+            "manager_on_times": r"(?:manager taking calls|manager on)(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "is_second_manager": r"(?!.*\bcheck in\b)(?:second manager|2nd manager)",
+            "second_manager_times": r"(?:second manager|2nd manager)(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "is_north_south_coord": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))",
+            "north_south_coord_times": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))(?:coord|coordinator)?(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
         }
         _description_patterns_fuzzy = {
             "is_manager_on": f"({description_regex['is_manager_on']}){{2s+2i+2d<=3}}",
             "manager_on_times": f"({description_regex['manager_on_times']}){{1s+2i+2d<=3}}",
-            "is_second_manager": f"({description_regex['is_second_manager']}){{1s+2i+2d<=3}}",
+            "is_second_manager": f"({description_regex['is_second_manager']}){{1s+1i+1d<=1}}",
+            "second_manager_times": f"({description_regex['second_manager_times']}){{1s+2i+2d<=3}}",
             "is_north_south_coord": f"({description_regex['is_north_south_coord']}){{1s+2i+2d<=3}}",
+            "north_south_coord_times": f"({description_regex['north_south_coord_times']}){{1s+2i+2d<=3}}",
         }
         return _description_patterns_fuzzy[key]
 
-    def _get_manager_times(self) -> dict:
+    def _get_manager_on_times(self) -> dict:
+        return self._get_description_times("manager_on_times", self.is_manager_on)
+
+    def _get_description_times(self, regex, test) -> dict:
         match = (
             re.search(
-                self._description_regex("manager_on_times"),
+                self._description_regex(regex),
                 self.description,
                 re.BESTMATCH | re.IGNORECASE,
             )
-            if self.is_manager_on
+            if test
             else None
         )
         start_time = match.group("start_time") if match is not None else None
@@ -220,6 +252,17 @@ class Shift:
         return match is not None
 
     @property
+    def second_manager_times(self) -> dict:
+        return self._get_description_times(
+            "second_manager_times", self.is_second_manager
+        )
+
+    @second_manager_times.setter
+    def second_manager_times(self, set_dict) -> None:
+        self._second_manager_start = set_dict["start_time"]
+        self._second_manager_end = set_dict["end_time"]
+
+    @property
     def is_north_south_coord(self) -> bool:
         match = re.search(
             self._description_regex("is_north_south_coord"),
@@ -227,6 +270,17 @@ class Shift:
             re.BESTMATCH | re.IGNORECASE,
         )
         return match is not None
+
+    @property
+    def north_south_coord_times(self) -> dict:
+        return self._get_description_times(
+            "north_south_coord_times", self.is_north_south_coord
+        )
+
+    @north_south_coord_times.setter
+    def north_south_coord_times(self, set_dict) -> None:
+        self._north_south_coord_start = set_dict["start_time"]
+        self._north_south_coord_end = set_dict["end_time"]
 
     @property
     def coord_area(self) -> str | None:

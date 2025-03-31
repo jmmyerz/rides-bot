@@ -35,10 +35,10 @@ def run_bot(args):
             filter, date=args.date if args.date else "Today"
         )
     # if args.debug:
-    #    utils.cmdline.logger(
-    #        'Shifts JSON:\n\n' + json.dumps(shifts, indent=2, cls=NestedJSONEncoder),
-    #        level='debug',
-    #    )
+    #     utils.cmdline.logger(
+    #         "Shifts JSON:\n\n" + json.dumps(shifts, indent=2, cls=NestedJSONEncoder),
+    #         level="debug",
+    #     )
 
     filtered_shifts = {
         "managers_on": [
@@ -53,12 +53,12 @@ def run_bot(args):
         ],
         "north_coords": [
             shift
-            for shift in shifts["coords"] + shifts["assistants"]
+            for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
             if shift.is_north_south_coord and shift.coord_area == "north"
         ],
         "south_coords": [
             shift
-            for shift in shifts["coords"] + shifts["assistants"]
+            for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
             if shift.is_north_south_coord and shift.coord_area == "south"
         ],
     }
