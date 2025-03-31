@@ -116,11 +116,11 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             "is_manager_on": r"(?:manager taking calls|manager on)",
-            "manager_on_times": r"(?:manager taking calls|manager on)(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "manager_on_times": r"(?:manager taking calls|manager on)(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
             "is_second_manager": r"(?!.*\bcheck in\b)(?:second manager|2nd manager)",
-            "second_manager_times": r"(?:second manager|2nd manager)(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "second_manager_times": r"(?:second manager|2nd manager)(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
             "is_north_south_coord": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))",
-            "north_south_coord_times": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))(?:coord|coordinator)?(?::\s?)?(?:\s?|\s?from\s?)(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})(?P<end_am_pm>am|pm|a|p?)?",
+            "north_south_coord_times": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))(?:coord|coordinator)?(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
         }
         _description_patterns_fuzzy = {
             "is_manager_on": f"({description_regex['is_manager_on']}){{2s+2i+2d<=3}}",
@@ -181,6 +181,9 @@ class Shift:
             else:
                 end_time = self._to_time(end_time)
 
+        start_time = start_time or datetime.time(0, 0)
+        end_time = end_time or datetime.time(0, 0)
+
         return (
             {
                 "start_time": start_time,
@@ -230,7 +233,7 @@ class Shift:
     @property
     def manager_on_times(self) -> dict:
         if not self._manager_start or not self._manager_end:
-            return self._get_manager_times()
+            return self._get_description_times("manager_on_times", self.is_manager_on)
         else:
             return {
                 "start_time": self._manager_start,
@@ -253,8 +256,9 @@ class Shift:
 
     @property
     def second_manager_times(self) -> dict:
-        return self._get_description_times(
-            "second_manager_times", self.is_second_manager
+        return (
+            self._get_description_times("second_manager_times", self.is_second_manager)
+            or {}
         )
 
     @second_manager_times.setter
@@ -273,8 +277,11 @@ class Shift:
 
     @property
     def north_south_coord_times(self) -> dict:
-        return self._get_description_times(
-            "north_south_coord_times", self.is_north_south_coord
+        return (
+            self._get_description_times(
+                "north_south_coord_times", self.is_north_south_coord
+            )
+            or {}
         )
 
     @north_south_coord_times.setter
