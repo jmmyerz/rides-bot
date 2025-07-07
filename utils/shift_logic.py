@@ -66,7 +66,7 @@ def determine_shift(
             id_times = 0, m_start, m_end
             score += 200
         # Matches e.g. a start time of 15 and a manager time of 3-10
-        elif m_start.hour >= 12 and matching_start(shift, m_start):
+        elif m_start.hour >= 12 and matching_start(shift, m_start, variance=3):
             matched += 1
             id_times = 1, m_start, m_end
             score += 200
