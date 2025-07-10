@@ -116,11 +116,11 @@ class Shift:
     def _description_regex(self, key: str):
         description_regex = {
             "is_manager_on": r"(?:manager taking calls|manager on)",
-            "manager_on_times": r"(?:manager taking calls|manager on)(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
+            "manager_on_times": r"(?:manager taking calls|manager on)(?:\sfrom\s|:\s?|\s?[-]\s?|\s{1,2})?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:\s?[-]\s?|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
             "is_second_manager": r"(?!.*\bcheck in\b)(?:second manager|2nd manager)",
-            "second_manager_times": r"(?:second manager|2nd manager)(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
+            "second_manager_times": r"(?:second manager|2nd manager)(?:\sfrom\s|:\s?|\s?[-]\s?|\s{1,2})?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:\s?[-]\s?|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
             "is_north_south_coord": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))",
-            "north_south_coord_times": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))(?:coord|coordinator)?(?::\s?)?(?:\s?|\s?from\s?)?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:[\s-]+|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
+            "north_south_coord_times": r"^(?<!(?:shadow\s))(?:wwns\s?-?\s?)?(?P<which>north|south)(\s?(?=coord|coordinator))(?:coord|coordinator)?(?:\sfrom\s|:\s?|\s?[-]\s?|\s{1,2})?(?P<start_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<start_am_pm>am|pm|a|p?)?(?:\s?[-]\s?|\s?to\s?)?(?P<end_time>[0-9]{1,2}:?[0-9]{0,2})?(?P<end_am_pm>am|pm|a|p?)?",
         }
         _description_patterns_fuzzy = {
             "is_manager_on": f"({description_regex['is_manager_on']}){{2s+2i+2d<=3}}",
