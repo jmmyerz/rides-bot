@@ -222,7 +222,7 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
                 m_start = m_start.replace(hour=m_start.hour + 12)
         # Shifts currently always end in the PM, except maybe 12am
         if m_end.hour <= 12:
-            factor = 12 if m_end.hour != 12 else 0
+            factor = 12 if m_end.hour != 0 else 0
             m_end = m_end.replace(hour=m_end.hour + factor)
 
         # Change these hours in the shift meta
