@@ -244,7 +244,7 @@ def run_bot(args):
 
         nowtime = datetime.datetime.now().time()
         rand = random.randint(0, 25)
-        match (nowtime):
+        match nowtime:
             case nowtime if nowtime.hour <= 11 and rand != 13:
                 friendly_time = "Good morning! 🌤️️🎢"
             case nowtime if 12 <= nowtime.hour <= 17 and rand != 13:
@@ -256,7 +256,7 @@ def run_bot(args):
 
         outlist = [
             friendly_time,
-            f'Management team for {message_date.strftime("%B %d, %Y")}',
+            f"Management team for {message_date.strftime('%B %d, %Y')}",
             "",
         ]
 
@@ -311,7 +311,7 @@ def run_bot(args):
         outlist.extend(
             [
                 "",
-                f'Shifts updated at {nowtime.strftime("%H:%M")}',
+                f"Shifts updated at {nowtime.strftime('%H:%M')}",
                 'Reply "refresh" to update',
             ]
         )
@@ -407,17 +407,18 @@ def run_bot(args):
                 f"Message for Discord:\n{discord_message}", level="debug"
             )
 
-    ####### EOS 2024 #######
+    ####### EOS 2025 #######
     # TODO: Move this to something that pulls a special schedule from YAML and returns early
     #       instead of only executing after whentowork has been polled
+    # Update 11/2025: New scheduletools-bot will need to implement this
 
-    # Check if today is EOS 2024 (November 4)
+    # Check if today is after EOS 2025 (November 9)
     _run_against_date = datetime.datetime.now().date()
     if args.date:
         _run_against_date = datetime.datetime.strptime(args.date, "%m/%d/%Y").date()
 
-    if _run_against_date == datetime.datetime(2024, 11, 4).date():
-        message = "Thanks for a great season. See you in 2025! 🎢🎉"
+    if _run_against_date == datetime.datetime(2025, 11, 10).date():
+        message = "Thanks for a great season. See you in 2026! 🎢🎉"
         _send_messages(
             {
                 "shift_msg": message,
@@ -431,10 +432,9 @@ def run_bot(args):
             utils.cmdline.logger(f"Special message:\n{message}", level="debug")
         return
 
-    # Check if today is after EOS 2024 (November 4)
-    # TODO: See above... but this is being commented out for now so we can start running the bot for 2025
-    # elif _run_against_date > datetime.datetime(2024, 11, 4).date():
-    #    return
+    # Check if today is after EOS 2025 (November 9)
+    elif _run_against_date > datetime.datetime(2025, 11, 10).date():
+        return
 
     if not _no_shifts_flag:
         _send_messages(
