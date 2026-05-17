@@ -440,16 +440,16 @@ def run_bot(args):
                 "north": messages["north_message"],
             }
             gm.post(args.message if args.message else _messages)
-        if args.discord or args.discord_debug or False:  # Disable Discord posting for now
-            channel_id = (
-                config.discord.test_channel_id
-                if args.discord_debug
-                else config.discord.main_channel_id
-            )
-            ds = SingleMessageClient(
-                channel_id=channel_id, message=messages["discord_message"]
-            )
-            ds.run(config.discord.bot_token)
+        #if args.discord or args.discord_debug or False:  # Disable Discord posting for now
+        #    channel_id = (
+        #        config.discord.test_channel_id
+        #        if args.discord_debug
+        #        else config.discord.main_channel_id
+        #    )
+        #    ds = SingleMessageClient(
+        #        channel_id=channel_id, message=messages["discord_message"]
+        #    )
+        #    ds.run(config.discord.bot_token)
         if args.telegram12 or args.telegram_debug:
             tb = TelegramBot(config)
             tb.send(
