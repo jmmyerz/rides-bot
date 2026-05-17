@@ -21,6 +21,7 @@ class Shift:
         end_time: str = "",
         total_hours: str = "",
         description: str = "",
+        pos_id: str = "",
     ):
         self.employee = employee
         self._start_time_str = start_time
@@ -30,6 +31,7 @@ class Shift:
         self._total_hours_str = total_hours
         self.total_hours = float(total_hours)
         self.description = description
+        self.pos_id = pos_id
 
         if self.is_manager_on:
             times = self._get_manager_on_times()
@@ -69,6 +71,7 @@ class Shift:
             "end_time": self.end_time,
             "total_hours": self.total_hours,
             "description": self.description,
+            "pos_id": self.pos_id,
             "meta": {
                 "is_am_shift": self.is_am_shift,
                 "is_pm_shift": self.is_pm_shift,
@@ -100,15 +103,22 @@ class Shift:
             "%I%p",  # e.g. 3pm
             "%I:%M%p",  # e.g. 11:30am
             "%I:%M",  # e.g. 8:00
+            
         ]
+        timestamptz: str = "%Y-%m-%dT%H:%M:%S%z"
 
         # Set the default time to midnight and try all the formats
         time_obj: datetime.time = datetime.time(0, 0)
+        matched: bool = False
         for format in formats:
             try:
                 time_obj = datetime.datetime.strptime(time_str, format).time()
+                matched = True
             except ValueError:
                 pass
+        if not matched:
+            # Use timestamptz format and convert to local time
+            time_obj = datetime.datetime.strptime(time_str, timestamptz).astimezone().time()
 
         return time_obj
 

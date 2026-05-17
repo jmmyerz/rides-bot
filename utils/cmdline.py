@@ -33,6 +33,13 @@ def logger(*args, level: str = "info") -> None:
 
 # Define command line args
 default_args = {
+    "api": {
+        "flag": "a",
+        "help": "Use Rides Manager API",
+        "kwargs": {
+            "action": "store_true",
+        },
+    },
     "debug": {
         "flag": "d",
         "help": "Debug",

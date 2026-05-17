@@ -1,6 +1,8 @@
 import datetime, json, sys, random
 from pathlib import Path
 
+from supabase import create_client, Client as SupabaseClient
+
 import utils
 import utils.shift_logic as shift_logic
 from utils.nested_json import NestedJSONEncoder
@@ -21,19 +23,40 @@ def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
     _no_shifts_flag = False
 
-    if args.login:
-        session = W2WSession(config.whentowork, debug=args.debug)
+    if not args.api:
+        if args.login:
+            session = W2WSession(config.whentowork, debug=args.debug)
+            config.save(filename=CONFIG_FILE_PATH)
+            sys.exit(0)
+
+        shifts = {}
+        w2w = W2WSession(config.whentowork, debug=args.debug)
         config.save(filename=CONFIG_FILE_PATH)
-        sys.exit(0)
 
-    shifts = {}
-    w2w = W2WSession(config.whentowork, debug=args.debug)
-    config.save(filename=CONFIG_FILE_PATH)
+        for filter in list(config["whentowork"]["filters"].items()):
+            shifts[filter[0]] = w2w.retrieve_schedule(
+                filter, date=args.date if args.date else "Today"
+            )
+    else:
+        from utils.w2w import Shift
+        url: str = config.rides_api.base_url
+        key: str = config.rides_api.key
+        supabase: SupabaseClient = create_client(url, key)
+        shifts = {}
 
-    for filter in list(config["whentowork"]["filters"].items()):
-        shifts[filter[0]] = w2w.retrieve_schedule(
-            filter, date=args.date if args.date else "Today"
-        )
+        for filter in list(config["whentowork"]["filters"].items()):
+            shifts[filter[0]] = supabase.schema("ops").table("schedule_shift").select("*").eq("local_date", args.date if args.date else datetime.datetime.now().strftime("%Y-%m-%d")).eq("position_id", filter[1]).execute().data
+            
+            # Convert the shifts to Shift objects
+            shifts[filter[0]] = [Shift(
+                employee=shift["first_name"] + " " + shift["last_name"],
+                start_time=shift["start_ts"],
+                end_time=shift["end_ts"],
+                total_hours=shift["duration_hours"],
+                description=shift["description"],
+                pos_id=shift["position_id"],
+            ) for shift in shifts[filter[0]]]
+
     # if args.debug:
     #     utils.cmdline.logger(
     #         "Shifts JSON:\n\n" + json.dumps(shifts, indent=2, cls=NestedJSONEncoder),
@@ -61,6 +84,8 @@ def run_bot(args):
             for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
             if shift.is_north_south_coord and shift.coord_area == "south"
         ],
+        "amo1": shifts["amo1"],
+        "amo2": shifts["amo2"],
     }
     if args.debug:
         utils.cmdline.logger(
@@ -218,6 +243,24 @@ def run_bot(args):
                 }
             )
 
+        # Add AMO1/AMO2 shifts without scoring; AMO1 is always assigned to the first shift, AMO2 to the second (shifts 0 and 1, respectively)
+        amo_key = "amo1" if meta_shift_id == 0 else "amo2" if meta_shift_id == 1 else None
+        if amo_key:
+            for shift in filtered_shifts[amo_key]:
+                meta_shift["amo"].append(
+                    {
+                        "name": shift.employee,
+                        "area": shift.description,  # The description field contains the area for AMOs (i.e. 1/2, 3/4, 5/6, 7/8, 9/10)
+                        "score": 0,
+                    }
+                )
+        # Sort the AMO shifts by area (1/2, 3/4, 5/6, 7/8, 9/10)
+        meta_shift["amo"] = sorted(
+            meta_shift["amo"],
+            key=lambda x: int(x["area"].split("/")[0]) if "/" in x["area"] else 10,
+        )
+
+
     if args.debug:
         utils.cmdline.logger(
             "Operating day:\n"
@@ -231,6 +274,11 @@ def run_bot(args):
             "second_manager": "Second manager: ",
             "north": "North coord: ",
             "south": "South coord: ",
+            "amo1/2": "AMO 1/2: ",
+            "amo3/4": "AMO 3/4: ",
+            "amo5/6": "AMO 5/6: ",
+            "amo7/8": "AMO 7/8: ",
+            "amo9/10": "AMO 9/10: ",
         }
 
         if not len(shifts["shifts"]):
@@ -282,6 +330,12 @@ def run_bot(args):
                 outlist.append(
                     f"{prefix}From {start_time.lower()} to {end_time.lower()}:"
                 )
+
+                if shift_id == 0:
+                    amo = "amo1"
+                elif shift_id == 1:
+                    amo = "amo2"
+
             if "managers_on" in shift and len(shift["managers_on"]) > 0:
                 outlist.append(
                     prefixes["manager_on"]
@@ -303,6 +357,13 @@ def run_bot(args):
                     prefixes["south"]
                     + max(shift["south_coords"], key=lambda s: s["score"])["name"]
                 )
+            
+            if "amo" in shift and len(shift["amo"]) > 0:
+                for amo_shift in shift["amo"]:
+                    outlist.append(
+                        prefixes[f"amo{amo_shift['area'].strip()}"]
+                        + amo_shift["name"]
+                    )
 
         if "errors" in shifts and len(shifts["errors"]) > 0:
             outlist.extend([""])
@@ -375,11 +436,11 @@ def run_bot(args):
             )
             _messages = {
                 "main": messages["shift_msg"],
-                "a910": messages["groupme_a910_message"],
+                "a910": messages["north_message"],
                 "north": messages["north_message"],
             }
             gm.post(args.message if args.message else _messages)
-        if args.discord or args.discord_debug:
+        if args.discord or args.discord_debug or False:  # Disable Discord posting for now
             channel_id = (
                 config.discord.test_channel_id
                 if args.discord_debug
@@ -403,14 +464,15 @@ def run_bot(args):
     def _print_messages_debug():
         if args.debug:
             utils.cmdline.logger(f"Message for GroupMe:\n{shift_msg}", level="debug")
-            utils.cmdline.logger(
-                f"Message for Discord:\n{discord_message}", level="debug"
-            )
+            #utils.cmdline.logger(
+            #    f"Message for Discord:\n{discord_message}", level="debug"
+            #)
 
     ####### EOS 2025 #######
     # TODO: Move this to something that pulls a special schedule from YAML and returns early
     #       instead of only executing after whentowork has been polled
     # Update 11/2025: New scheduletools-bot will need to implement this
+    # Update 5/2026: Well that was optimistic...
 
     # Check if today is after EOS 2025 (November 9)
     _run_against_date = datetime.datetime.now().date()
@@ -433,15 +495,14 @@ def run_bot(args):
         return
 
     # Check if today is after EOS 2025 (November 9)
-    elif _run_against_date > datetime.datetime(2025, 11, 10).date():
-        return
+    #elif _run_against_date > datetime.datetime(2025, 11, 10).date():
+    #    return
 
     if not _no_shifts_flag:
         _send_messages(
             {
                 "shift_msg": shift_msg,
                 "groupme_a910_message": groupme_a910_message,
-                "discord_message": discord_message,
                 "north_message": north_message,
                 "telegram_message": telegram_message,
             }

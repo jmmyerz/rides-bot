@@ -7,6 +7,8 @@ whentowork:
         managers:
         assistants:
         coords:
+        amo1:
+        amo2:
 groupme:
     bot_id:
     dev_bot_id:
