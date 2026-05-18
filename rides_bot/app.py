@@ -254,11 +254,12 @@ def run_bot(args):
                         "score": 0,
                     }
                 )
-        # Sort the AMO shifts by area (1/2, 3/4, 5/6, 7/8, 9/10)
-        meta_shift["amo"] = sorted(
-            meta_shift["amo"],
-            key=lambda x: int(x["area"].split("/")[0]) if "/" in x["area"] else 10,
-        )
+        if "amo" in meta_shift:
+            # Sort the AMO shifts by area (1/2, 3/4, 5/6, 7/8, 9/10)
+            meta_shift["amo"] = sorted(
+                meta_shift["amo"],
+                key=lambda x: int(x["area"].split("/")[0]) if "/" in x["area"] else 10,
+            )
 
 
     if args.debug:
