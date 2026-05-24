@@ -69,10 +69,20 @@ def groupme():
     if message == "refresh":
         run_bot(args)
         return Response(status=200)
+    
+    if message == "debug":
+        import json
+        with open("debug.txt", "w") as f:
+            # Erase and overwrite debug file with config dump
+            f.write(json.dumps(config.dict(), indent=4))
+        return Response(status=200)
 
     elif re.match(date_pattern, message):
         args.date = re.search(date_pattern, message).group(1)
         run_bot(args)
         return Response(status=200)
     else:
+        # Append to the failure log file
+        with open("failure_log.txt", "a") as f:
+            f.write(f"{message}\n")
         return Response(status=204)

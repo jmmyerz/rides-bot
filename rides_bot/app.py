@@ -1,4 +1,4 @@
-import datetime, json, sys, random
+import datetime, json, sys, random, regex as re
 from pathlib import Path
 
 from supabase import create_client, Client as SupabaseClient
@@ -247,10 +247,17 @@ def run_bot(args):
         amo_key = "amo1" if meta_shift_id == 0 else "amo2" if meta_shift_id == 1 else None
         if amo_key:
             for shift in filtered_shifts[amo_key]:
+                area = (
+                    re.search(
+                        r'(\d{1}\/\d{1,2})',
+                        shift.description,
+                        re.BESTMATCH | re.IGNORECASE,
+                    ) # The description field contains the area for AMOs (i.e. 1/2, 3/4, 5/6, 7/8, 9/10)
+                )
                 meta_shift["amo"].append(
                     {
                         "name": shift.employee,
-                        "area": shift.description,  # The description field contains the area for AMOs (i.e. 1/2, 3/4, 5/6, 7/8, 9/10)
+                        "area": area.group(1) if area else None,
                         "score": 0,
                     }
                 )
