@@ -45,6 +45,8 @@ class TelegramListener:
         self.test_chat_id = config.telegram.test_chat_id
         self.args = Args()
 
+        self.args.api = True
+
         self.app = Application.builder().token(self.token).build()
 
     async def send_message(self, message: str, chat_id: int = None) -> bool:

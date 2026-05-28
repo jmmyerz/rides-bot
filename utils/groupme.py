@@ -38,33 +38,37 @@ class GroupMe:
 
         if self._dev_bot:
             _bot_id = self._gmconf.dev_bot_id
+            _message = message["main"] if isinstance(message, dict) else message
             _request(
                 {
                     "bot_id": _bot_id,
-                    "text": message["main"],
+                    "text": _message,
                 }
             )
         if self._a910_bot:
+            _message = message["a910"] if isinstance(message, dict) else message
             _request(
                 {
                     "bot_id": self._gmconf.a910_bot_id,
-                    "text": message["a910"],
+                    "text": _message,
                 }
             )
 
         if self._north_bot:
+            _message = message["north"] if isinstance(message, dict) else message
             _request(
                 {
                     "bot_id": self._gmconf.north_bot_id,
-                    "text": message["north"],
+                    "text": _message,
                 }
             )
 
         if self._main_bot:
+            _message = message["main"] if isinstance(message, dict) else message
             _request(
                 {
                     "bot_id": self._gmconf.bot_id,
-                    "text": message["main"],
+                    "text": _message,
                 }
             )
 

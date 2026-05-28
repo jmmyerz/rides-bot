@@ -461,7 +461,7 @@ def run_bot(args):
         if args.telegram12 or args.telegram_debug:
             tb = TelegramBot(config)
             tb.send(
-                messages["telegram_message"],
+                args.message if args.message else messages["telegram_message"],
                 (
                     config.telegram.a12_chat_id
                     if args.telegram12

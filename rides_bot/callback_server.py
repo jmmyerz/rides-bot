@@ -50,6 +50,7 @@ def groupme():
     args = RuntimeArgs(config.gunicorn.rides_bot_args)
 
     # Quick and dirty handling of where the bot posts
+    args.api = True
     args.gm_debug = False
     args.groupme = False
     args.groupme910 = False
