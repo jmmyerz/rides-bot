@@ -1,6 +1,8 @@
 from typing import Tuple
 import datetime
 
+from .cmdline import logger
+
 from .w2w import Shift
 
 
@@ -74,9 +76,14 @@ def determine_shift(
             id_times = 0, m_start, m_end
             score += 200
         # Matches e.g. a start time of 15 and a manager time of 3-10
-        elif m_start.hour >= 12 and matching_start(shift, m_start, variance=3):
+        elif m_start.hour >= 12 and m_start.hour < 20 and matching_start(shift, m_start, variance=3):
             matched += 1
             id_times = 1, m_start, m_end
+            score += 200
+        # Match 3rd shift (trainings)
+        elif m_start.hour >= 20 and matching_start(shift, m_start, variance=5):
+            matched += 1
+            id_times = 2, m_start, m_end
             score += 200
 
         # Matches e.g. an end time of 15 and a manager time of 8-3
@@ -229,7 +236,7 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
             if 1 <= m_start.hour <= 6:
                 m_start = m_start.replace(hour=m_start.hour + 12)
         # Shifts currently always end in the PM, except maybe 12am
-        if m_end.hour <= 12:
+        if m_end.hour <= 12 and m_end.hour > 1:
             factor = 12 if m_end.hour != 0 else 0
             m_end = m_end.replace(hour=m_end.hour + factor)
 
@@ -248,20 +255,24 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
         ) = determine_shift(operating_day_meta, shift, m_start, m_end)
 
         # If the shift is already filled, mark as duplicate
-        if operating_day_meta["shifts"][shift_id] != {}:
-            operating_day_meta["shifts"][shift_id]["duplicate"] = True
-            operating_day_meta["errors"].append(
-                "Multiple managers scheduled for this shift. Result may be inaccurate."
-            )
-        else:
+        #if operating_day_meta["shifts"][shift_id] != {}:
+        #    operating_day_meta["shifts"][shift_id]["duplicate"] = True
+        #    operating_day_meta["errors"].append(
+        #        "Multiple managers scheduled for this shift. Result may be inaccurate."
+        #    )
+        #else:
             # Add times and positions to the operating day meta
-            operating_day_meta["shifts"][shift_id] = {
-                "shift_times": {
-                    "start": corrected_m_start,
-                    "end": corrected_m_end,
-                },
-                "managers_on": [],
-            }
+        logger(
+            f"Identified manager on shift {shift_id} with score {score} for manager on times {m_start}-{m_end} and shift times {shift.start_time}-{shift.end_time}",
+            level="debug",
+        )
+        operating_day_meta["shifts"][shift_id] = {
+            "shift_times": {
+                "start": corrected_m_start,
+                "end": corrected_m_end,
+            },
+            "managers_on": [],
+        }
         if len(filtered_shifts["second_managers"]) > 0:
             operating_day_meta["shifts"][shift_id].__setitem__("second_managers", [])
         if len(filtered_shifts["mods"]) > 0:

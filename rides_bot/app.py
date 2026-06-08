@@ -75,7 +75,7 @@ def run_bot(args):
             if shift.is_second_manager
         ],
         "mods": [
-            shift for shift in shifts["managers"]
+            shift for shift in shifts["managers"] + shifts["amo1"] + shifts["amo2"]
             if shift.is_mod
         ],
         #"north_coords": [
@@ -140,6 +140,10 @@ def run_bot(args):
                     "score": shift_scored[3],
                 }
             )
+
+        # If there are >2 shifts, we only need manager on for the 3rd shift
+        if meta_shift_id == 2:
+            continue
 
         # Build the second manager shifts
         if args.debug:
@@ -376,7 +380,7 @@ def run_bot(args):
         ]
 
         for shift_id, shift in shifts["shifts"].items():
-            if shifts["detected_shifts"] == 2:
+            if shifts["detected_shifts"] >= 2:
                 time_fmts = ("%-I:%M%p", "%-I%p")
 
                 # Extract the start and end times of the shift and format them
