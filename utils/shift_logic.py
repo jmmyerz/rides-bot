@@ -51,12 +51,12 @@ def determine_shift(
             _tmp_time_in_desc = True
 
         if hasattr(shift, "_mod_start"):
-            score -= get_variance(shift._mod_start, m_start) * 10
+            score -= get_variance(shift._mod_start, m_start) * 30
         if hasattr(shift, "_mod_end"):
-            score -= get_variance(shift._mod_end, m_end) * 10
+            score -= get_variance(shift._mod_end, m_end) * 30
 
         if hasattr(shift, "is_specified_shift") and shift.is_specified_shift:
-            return (shift.specified_shift, m_start, m_end, score + 100, shift)
+            return (shift.specified_shift, m_start, m_end, score + 500, shift)
 
         #if hasattr(shift, "_north_south_coord_start"):
         #    score -= get_variance(shift._north_south_coord_start, m_start) * 10
@@ -76,12 +76,12 @@ def determine_shift(
             id_times = 0, m_start, m_end
             score += 200
         # Matches e.g. a start time of 15 and a manager time of 3-10
-        elif m_start.hour >= 12 and m_start.hour < 20 and matching_start(shift, m_start, variance=3):
+        elif m_start.hour >= 12 and m_start.hour < 18 and matching_start(shift, m_start, variance=3):
             matched += 1
             id_times = 1, m_start, m_end
             score += 200
         # Match 3rd shift (trainings)
-        elif m_start.hour >= 20 and matching_start(shift, m_start, variance=5):
+        elif m_start.hour >= 18 and matching_start(shift, m_start, variance=5):
             matched += 1
             id_times = 2, m_start, m_end
             score += 200

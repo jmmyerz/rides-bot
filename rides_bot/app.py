@@ -315,7 +315,7 @@ def run_bot(args):
     # TODO: make this easier to read
     # 2026 update: find the real shift change time by looking at the AMO shifts; if the most common AMO1 end time and the most common AMO2 start time match, that is the shift change time.
     # (only applies if there are 2 shifts and AMOs scheduled)
-    if len(operating_day_meta["shifts"]) == 2:
+    if len(operating_day_meta["shifts"]) >= 2:
         #print(f"Operating day meta: {operating_day_meta}")
         #operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
         #    "shifts"
@@ -330,6 +330,12 @@ def run_bot(args):
             operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
                 "shifts"
             ][1]["shift_times"]["start"]
+
+        # Constrain the 3rd shift to the end time of the 2nd shift if it exists
+        if len(operating_day_meta["shifts"]) == 3:
+            operating_day_meta["shifts"][2]["shift_times"]["start"] = operating_day_meta[
+                "shifts"
+            ][1]["shift_times"]["end"]
 
     if args.debug:
         utils.cmdline.logger(
