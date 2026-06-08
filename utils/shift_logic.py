@@ -13,7 +13,7 @@ def determine_shift(
     m_end: datetime.time,
     match_multiple: bool = False,
     shift_id: int = 0,
-) -> Tuple[str, datetime.time, datetime.time, int, Shift]:
+) -> tuple[int, datetime.time, datetime.time, int, Shift]:
     def matching_start(shift: Shift, start: datetime.time, variance: int = 2) -> bool:
         return True if abs(shift.start_time.hour - start.hour) <= variance else False
 
@@ -48,12 +48,20 @@ def determine_shift(
             score -= get_variance(shift._second_manager_end, m_end) * 10
             _tmp_time_in_desc = True
 
-        if hasattr(shift, "_north_south_coord_start"):
-            score -= get_variance(shift._north_south_coord_start, m_start) * 10
-            _tmp_time_in_desc = True
-        if hasattr(shift, "_north_south_coord_end"):
-            score -= get_variance(shift._north_south_coord_end, m_end) * 10
-            _tmp_time_in_desc = True
+        if hasattr(shift, "_mod_start"):
+            score -= get_variance(shift._mod_start, m_start) * 10
+        if hasattr(shift, "_mod_end"):
+            score -= get_variance(shift._mod_end, m_end) * 10
+
+        if hasattr(shift, "is_specified_shift") and shift.is_specified_shift:
+            return (shift.specified_shift, m_start, m_end, score + 100, shift)
+
+        #if hasattr(shift, "_north_south_coord_start"):
+        #    score -= get_variance(shift._north_south_coord_start, m_start) * 10
+        #    _tmp_time_in_desc = True
+        #if hasattr(shift, "_north_south_coord_end"):
+        #    score -= get_variance(shift._north_south_coord_end, m_end) * 10
+        #    _tmp_time_in_desc = True
 
         # If score wasn't changed here, the description times were an exact match and we should boost the score
         if _tmp_time_in_desc and _tmp_score == score:
@@ -180,8 +188,8 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
     managers_on = len(filtered_shifts["managers_on"])
     errors = []
 
-    if managers_on > 2:
-        managers_on = 2
+    if managers_on > 3:
+        managers_on = 3
 
     operating_day_meta = {
         "detected_shifts": managers_on,
@@ -256,10 +264,12 @@ def build_operating_day_meta(filtered_shifts: dict) -> dict:
             }
         if len(filtered_shifts["second_managers"]) > 0:
             operating_day_meta["shifts"][shift_id].__setitem__("second_managers", [])
-        if len(filtered_shifts["north_coords"]) > 0:
-            operating_day_meta["shifts"][shift_id].__setitem__("north_coords", [])
-        if len(filtered_shifts["south_coords"]) > 0:
-            operating_day_meta["shifts"][shift_id].__setitem__("south_coords", [])
+        if len(filtered_shifts["mods"]) > 0:
+            operating_day_meta["shifts"][shift_id].__setitem__("mods", [])
+        #if len(filtered_shifts["north_coords"]) > 0:
+        #    operating_day_meta["shifts"][shift_id].__setitem__("north_coords", [])
+        #if len(filtered_shifts["south_coords"]) > 0:
+        #    operating_day_meta["shifts"][shift_id].__setitem__("south_coords", [])
         if len(filtered_shifts["amo1"]) > 0 or len(filtered_shifts["amo2"]) > 0:
             operating_day_meta["shifts"][shift_id].__setitem__("amo", [])
 

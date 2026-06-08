@@ -74,16 +74,20 @@ def run_bot(args):
             for shift in shifts["managers"] + shifts["assistants"]
             if shift.is_second_manager
         ],
-        "north_coords": [
-            shift
-            for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
-            if shift.is_north_south_coord and shift.coord_area == "north"
+        "mods": [
+            shift for shift in shifts["managers"]
+            if shift.is_mod
         ],
-        "south_coords": [
-            shift
-            for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
-            if shift.is_north_south_coord and shift.coord_area == "south"
-        ],
+        #"north_coords": [
+        #    shift
+        #    for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
+        #    if shift.is_north_south_coord and shift.coord_area == "north"
+        #],
+        #"south_coords": [
+        #    shift
+        #    for shift in shifts["coords"] + shifts["assistants"] + shifts["managers"]
+        #    if shift.is_north_south_coord and shift.coord_area == "south"
+        #],
         "amo1": shifts["amo1"],
         "amo2": shifts["amo2"],
     }
@@ -97,17 +101,10 @@ def run_bot(args):
     # Build the operating day meta dict
     operating_day_meta = shift_logic.build_operating_day_meta(filtered_shifts)
 
-    # If there are 2 shifts, the end time of the first shift should be the start time of the second shift
-    # TODO: make this easier to read
-    if len(operating_day_meta["shifts"]) == 2:
-        print(f"Operating day meta: {operating_day_meta}")
-        operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
-            "shifts"
-        ][1]["shift_times"]["start"]
-
+    
     if args.debug:
         utils.cmdline.logger(
-            "Operating day meta:\n"
+            "Initial operating day meta:\n"
             + json.dumps(operating_day_meta, indent=2, cls=NestedJSONEncoder),
             level="debug",
         )
@@ -176,72 +173,104 @@ def run_bot(args):
                     "score": shift_scored[3],
                 }
             )
+        # Build the mod shifts
+        if args.debug:
+            utils.cmdline.logger(
+                f"Running {utils.cmdline.cmd_colors.OKCYAN}MOD{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
+                level="debug",
+            )
+        for shift in filtered_shifts["mods"]:
+            shift_scored = shift_logic.determine_shift(
+                operating_day_meta,
+                shift,
+                meta_shift["shift_times"]["start"],
+                meta_shift["shift_times"]["end"],
+                match_multiple=True,
+                shift_id=meta_shift_id,
+            )
+            if args.debug:
+                utils.cmdline.logger(
+                    utils.cmdline.colorize(
+                        f"{shift_scored[4].employee} score: {shift_scored[3]}",
+                        utils.cmdline.cmd_colors.ITALIC,
+                    ),
+                    level="debug",
+                )
+            if shift_scored[3] <= 0:
+                # If the score is negative, it was disqualified
+                continue
+            meta_shift["mods"].append(
+                {
+                    "name": shift.employee,
+                    "score": shift_scored[3],
+                }
+            )
 
         # Build the north coord shifts
-        if args.debug:
-            utils.cmdline.logger(
-                f"Running {utils.cmdline.cmd_colors.OKCYAN}north coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
-                level="debug",
-            )
-        for shift in filtered_shifts["north_coords"]:
-            shift_scored = shift_logic.determine_shift(
-                operating_day_meta,
-                shift,
-                meta_shift["shift_times"]["start"],
-                meta_shift["shift_times"]["end"],
-                match_multiple=True,
-                shift_id=meta_shift_id,
-            )
-            if args.debug:
-                utils.cmdline.logger(
-                    utils.cmdline.colorize(
-                        f"{shift_scored[4].employee} score: {shift_scored[3]}",
-                        utils.cmdline.cmd_colors.ITALIC,
-                    ),
-                    level="debug",
-                )
-            if shift_scored[3] <= -1000:
-                # If the score is less than -1000, it was disqualified
-                continue
-            meta_shift["north_coords"].append(
-                {
-                    "name": shift.employee,
-                    "score": shift_scored[3],
-                }
-            )
+        #if args.debug:
+        #    utils.cmdline.logger(
+        #        f"Running {utils.cmdline.cmd_colors.OKCYAN}north coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
+        #        level="debug",
+        #    )
+        #for shift in filtered_shifts["north_coords"]:
+        #    shift_scored = shift_logic.determine_shift(
+        #        operating_day_meta,
+        #        shift,
+        #        meta_shift["shift_times"]["start"],
+        #        meta_shift["shift_times"]["end"],
+        #        match_multiple=True,
+        #        shift_id=meta_shift_id,
+        #    )
+        #    if args.debug:
+        #        utils.cmdline.logger(
+        #            utils.cmdline.colorize(
+        #                f"{shift_scored[4].employee} score: {shift_scored[3]}",
+        #                utils.cmdline.cmd_colors.ITALIC,
+        #            ),
+        #            level="debug",
+        #        )
+        #    if shift_scored[3] <= -1000:
+        #        # If the score is less than -1000, it was disqualified
+        #        continue
+        #    meta_shift["north_coords"].append(
+        #        {
+        #            "name": shift.employee,
+        #            "score": shift_scored[3],
+        #        }
+        #    )
 
         # Build the south coord shifts
-        if args.debug:
-            utils.cmdline.logger(
-                f"Running {utils.cmdline.cmd_colors.OKCYAN}south coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
-                level="debug",
-            )
-        for shift in filtered_shifts["south_coords"]:
-            shift_scored = shift_logic.determine_shift(
-                operating_day_meta,
-                shift,
-                meta_shift["shift_times"]["start"],
-                meta_shift["shift_times"]["end"],
-                match_multiple=True,
-                shift_id=meta_shift_id,
-            )
-            if args.debug:
-                utils.cmdline.logger(
-                    utils.cmdline.colorize(
-                        f"{shift_scored[4].employee} score: {shift_scored[3]}",
-                        utils.cmdline.cmd_colors.ITALIC,
-                    ),
-                    level="debug",
-                )
-            if shift_scored[3] <= -1000:
-                # If the score is less than -1000, it was disqualified
-                continue
-            meta_shift["south_coords"].append(
-                {
-                    "name": shift.employee,
-                    "score": shift_scored[3],
-                }
-            )
+        #if args.debug:
+        #    utils.cmdline.logger(
+        #        f"Running {utils.cmdline.cmd_colors.OKCYAN}south coord{utils.cmdline.cmd_colors.ENDC} for meta shift {meta_shift_id}",
+        #        level="debug",
+        #    )
+        #for shift in filtered_shifts["south_coords"]:
+        #    shift_scored = shift_logic.determine_shift(
+        #        operating_day_meta,
+        #        shift,
+        #        meta_shift["shift_times"]["start"],
+        #        meta_shift["shift_times"]["end"],
+        #        match_multiple=True,
+        #        shift_id=meta_shift_id,
+        #    )
+        #    if args.debug:
+        #        utils.cmdline.logger(
+        #            utils.cmdline.colorize(
+        #                f"{shift_scored[4].employee} score: {shift_scored[3]}",
+        #                utils.cmdline.cmd_colors.ITALIC,
+        #            ),
+        #            level="debug",
+        #        )
+        #    if shift_scored[3] <= -1000:
+        #        # If the score is less than -1000, it was disqualified
+        #        continue
+        #    meta_shift["south_coords"].append(
+        #        {
+        #            "name": shift.employee,
+        #            "score": shift_scored[3],
+        #        }
+        #    )
 
         # Add AMO1/AMO2 shifts without scoring; AMO1 is always assigned to the first shift, AMO2 to the second (shifts 0 and 1, respectively)
         amo_key = "amo1" if meta_shift_id == 0 else "amo2" if meta_shift_id == 1 else None
@@ -259,6 +288,7 @@ def run_bot(args):
                         "name": shift.employee,
                         "area": area.group(1) if area else None,
                         "score": 0,
+                        "shift_obj": shift,
                     }
                 )
         if "amo" in meta_shift:
@@ -267,7 +297,35 @@ def run_bot(args):
                 meta_shift["amo"],
                 key=lambda x: int(x["area"].split("/")[0]) if "/" in x["area"] else 10,
             )
+        if args.debug:
+            utils.cmdline.logger(
+                f"Built AMO shifts for meta shift {meta_shift_id}, found {len(meta_shift['amo'])} shifts\n" + json.dumps(meta_shift["amo"], indent=2, cls=NestedJSONEncoder),
+                level="debug",
+            )
+            utils.cmdline.logger(
+                f"Completed meta shift {meta_shift_id}:\n" + json.dumps(meta_shift, indent=2, cls=NestedJSONEncoder),
+                level="debug",
+            )
 
+    # If there are 2 shifts, the end time of the first shift should be the start time of the second shift
+    # TODO: make this easier to read
+    # 2026 update: find the real shift change time by looking at the AMO shifts; if the most common AMO1 end time and the most common AMO2 start time match, that is the shift change time.
+    # (only applies if there are 2 shifts and AMOs scheduled)
+    if len(operating_day_meta["shifts"]) == 2:
+        #print(f"Operating day meta: {operating_day_meta}")
+        #operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
+        #    "shifts"
+        #][1]["shift_times"]["start"]
+        if len(operating_day_meta["shifts"][0]["amo"]) > 0 and len(operating_day_meta["shifts"][1]["amo"]) > 0:
+            most_common_amo1_end = max(set([shift["shift_obj"].end_time for shift in operating_day_meta["shifts"][0]["amo"]]), key=[shift["shift_obj"].end_time for shift in operating_day_meta["shifts"][0]["amo"]].count)
+            most_common_amo2_start = max(set([shift["shift_obj"].start_time for shift in operating_day_meta["shifts"][1]["amo"]]), key=[shift["shift_obj"].start_time for shift in operating_day_meta["shifts"][1]["amo"]].count)
+            if most_common_amo1_end == most_common_amo2_start:
+                operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta["assumed_first_shift_end"] = most_common_amo1_end
+                operating_day_meta["shifts"][1]["shift_times"]["start"] = operating_day_meta["assumed_second_shift_start"] = most_common_amo2_start
+        else: # If there are no AMOs scheduled, fall back to the old method of just matching the end time of the first shift to the start time of the second shift
+            operating_day_meta["shifts"][0]["shift_times"]["end"] = operating_day_meta[
+                "shifts"
+            ][1]["shift_times"]["start"]
 
     if args.debug:
         utils.cmdline.logger(
@@ -280,8 +338,9 @@ def run_bot(args):
         prefixes = {
             "manager_on": "Manager on: ",
             "second_manager": "Second manager: ",
-            "north": "North coord: ",
-            "south": "South coord: ",
+            "mod": "MOD: ",
+            #"north": "North coord: ",
+            #"south": "South coord: ",
             "amo1/2": "AMO 1/2: ",
             "amo3/4": "AMO 3/4: ",
             "amo5/6": "AMO 5/6: ",
@@ -355,16 +414,21 @@ def run_bot(args):
                     prefixes["second_manager"]
                     + max(shift["second_managers"], key=lambda s: s["score"])["name"]
                 )
-            if "north_coords" in shift and len(shift["north_coords"]) > 0:
+            if "mods" in shift and len(shift["mods"]) > 0:
                 outlist.append(
-                    prefixes["north"]
-                    + max(shift["north_coords"], key=lambda s: s["score"])["name"]
+                    prefixes["mod"]
+                    + max(shift["mods"], key=lambda s: s["score"])["name"]
                 )
-            if "south_coords" in shift and len(shift["south_coords"]) > 0:
-                outlist.append(
-                    prefixes["south"]
-                    + max(shift["south_coords"], key=lambda s: s["score"])["name"]
-                )
+            #if "north_coords" in shift and len(shift["north_coords"]) > 0:
+            #    outlist.append(
+            #        prefixes["north"]
+            #        + max(shift["north_coords"], key=lambda s: s["score"])["name"]
+            #    )
+            #if "south_coords" in shift and len(shift["south_coords"]) > 0:
+            #    outlist.append(
+            #        prefixes["south"]
+            #        + max(shift["south_coords"], key=lambda s: s["score"])["name"]
+            #    )
             
             if "amo" in shift and len(shift["amo"]) > 0:
                 for amo_shift in shift["amo"]:
@@ -404,7 +468,7 @@ def run_bot(args):
                 line
                 for line in shift_msg.split("\n")
                 if not line.startswith("Second manager: ")
-                and not line.startswith("North coord: ")
+                and not line.startswith("MOD: ")
             ]
         )
 
@@ -414,7 +478,7 @@ def run_bot(args):
                 line
                 for line in shift_msg.split("\n")
                 if not line.startswith("Second manager: ")
-                and not line.startswith("South coord: ")
+                and not line.startswith("MOD: ")
             ]
         )
 
