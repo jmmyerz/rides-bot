@@ -18,6 +18,11 @@ CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
 class NoShiftsDetectedError(Exception):
     pass
 
+def normalize_name(string: str) -> str:
+    # Remove from the first occurrence of '(' to the end of the string in last names
+    string = re.sub(r"\(.*$", "", string)
+    # Remove extra whitespace
+    return string.strip()
 
 def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
@@ -46,10 +51,10 @@ def run_bot(args):
 
         for filter in list(config["whentowork"]["filters"].items()):
             shifts[filter[0]] = supabase.schema("ops").table("schedule_shift").select("*").eq("local_date", args.date if args.date else datetime.datetime.now().strftime("%Y-%m-%d")).eq("position_id", filter[1]).execute().data
-            
+
             # Convert the shifts to Shift objects
             shifts[filter[0]] = [Shift(
-                employee=shift["first_name"] + " " + shift["last_name"],
+                employee=normalize_name(shift["first_name"] + " " + shift["last_name"]),
                 start_time=shift["start_ts"],
                 end_time=shift["end_ts"],
                 total_hours=shift["duration_hours"],
@@ -62,6 +67,7 @@ def run_bot(args):
     #         "Shifts JSON:\n\n" + json.dumps(shifts, indent=2, cls=NestedJSONEncoder),
     #         level="debug",
     #     )
+
 
     filtered_shifts = {
         "managers_on": [
