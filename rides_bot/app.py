@@ -11,6 +11,7 @@ from utils.w2w import W2WSession
 from utils.groupme import GroupMe
 from utils.discord import SingleMessageClient
 from utils.telegram import TelegramBot
+from utils.radios import insert_call_number
 
 CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
 
@@ -422,18 +423,18 @@ def run_bot(args):
             if "managers_on" in shift and len(shift["managers_on"]) > 0:
                 outlist.append(
                     prefixes["manager_on"]
-                    + max(shift["managers_on"], key=lambda s: s["score"])["name"]
+                    + insert_call_number(max(shift["managers_on"], key=lambda s: s["score"])["name"])
                     + ("*" if "duplicate" in shift and shift["duplicate"] else "")
                 )
             if "second_managers" in shift and len(shift["second_managers"]) > 0:
                 outlist.append(
                     prefixes["second_manager"]
-                    + max(shift["second_managers"], key=lambda s: s["score"])["name"]
+                    + insert_call_number(max(shift["second_managers"], key=lambda s: s["score"])["name"])
                 )
             if "mods" in shift and len(shift["mods"]) > 0:
                 outlist.append(
                     prefixes["mod"]
-                    + max(shift["mods"], key=lambda s: s["score"])["name"]
+                    + insert_call_number(max(shift["mods"], key=lambda s: s["score"])["name"])
                 )
             #if "north_coords" in shift and len(shift["north_coords"]) > 0:
             #    outlist.append(
@@ -450,7 +451,7 @@ def run_bot(args):
                 for amo_shift in shift["amo"]:
                     outlist.append(
                         prefixes[f"amo{amo_shift['area'].strip()}"]
-                        + amo_shift["name"]
+                        + insert_call_number(amo_shift["name"])
                     )
 
         if "errors" in shifts and len(shifts["errors"]) > 0:
