@@ -285,7 +285,7 @@ def run_bot(args):
 
         # Add AMO1/AMO2 shifts without scoring; AMO1 is always assigned to the first shift, AMO2 to the second (shifts 0 and 1, respectively)
         amo_key = "amo1" if meta_shift_id == 0 else "amo2" if meta_shift_id == 1 else None
-        if amo_key:
+        if amo_key and amo_key in filtered_shifts and len(filtered_shifts[amo_key]) > 0:
             for shift in filtered_shifts[amo_key]:
                 area = (
                     re.search(
