@@ -285,6 +285,9 @@ def run_bot(args):
 
         # Add AMO1/AMO2 shifts without scoring; AMO1 is always assigned to the first shift, AMO2 to the second (shifts 0 and 1, respectively)
         amo_key = "amo1" if meta_shift_id == 0 else "amo2" if meta_shift_id == 1 else None
+        if amo_key and amo_key in filtered_shifts and len(filtered_shifts[amo_key]) == 0 and meta_shift_id == 0: 
+            # If there are no AMO shifts for first shift, check if there are any AMO shifts for the second shift and assign them to the first shift instead (e.g. post-season Friday nights)
+            amo_key = "amo2"
         if amo_key and amo_key in filtered_shifts and len(filtered_shifts[amo_key]) > 0:
             for shift in filtered_shifts[amo_key]:
                 area = (
