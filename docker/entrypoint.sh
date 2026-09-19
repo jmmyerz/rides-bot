@@ -36,16 +36,17 @@ echo "Starting container with role: $ROLE${LISTENER_TYPE:+, listener type: $LIST
 # Sync the /rides-bot repo
 if [ -d "/rides-bot/.git" ]; then
     cd /rides-bot
-    git pull origin main
+    git pull origin master > /tmp/git_pull.log 2>&1 || { cat /tmp/git_pull.log; exit 1; }
 fi
 
 # Ensure the requirements are installed
-pip3 install --no-cache-dir -r /rides-bot/requirements.txt
+pip3 install --no-cache-dir -r /rides-bot/requirements.txt > /tmp/pip_install.log 2>&1 || { cat /tmp/pip_install.log; exit 1; }
 
 # If role is scheduler, run supercronic against /rides-bot/scheduler_check and wait up to 10s to see a line with "Scheduler check requested... hello from rides-bot!"
 # If this fails, echo the contents of the log and exit with an error, if it succeeds, write the cronfile from RIDESBOT_SCHEDULER_RUN_AT and RIDESBOT_SCHEDULER_RUN_COMMAND
 if [ "$ROLE" = "scheduler" ]; then
-    supercronic /rides-bot/scheduler_check > /tmp/scheduler_check.log 2>&1
+    echo "Running scheduler check..."
+    supercronic /rides-bot/scheduler_check > /tmp/scheduler_check.log 2>&1 &
     timeout 10 sh -c 'until grep -q "Scheduler check requested... hello from rides-bot!" /tmp/scheduler_check.log; do sleep 1; done' || { cat /tmp/scheduler_check.log; exit 1; }
     echo "$RIDESBOT_SCHEDULER_RUN_AT $RIDESBOT_SCHEDULER_RUN_COMMAND" > /cronfile
 fi
