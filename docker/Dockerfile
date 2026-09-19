@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM python:3.11-alpine
 
 # Default env
 ENV TZ=America/Denver PATH=$PATH:/rides-bot PYTHONPATH=/rides-bot/src 
