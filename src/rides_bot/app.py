@@ -28,7 +28,7 @@ def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
     _no_shifts_flag = False
 
-    if args.scheduler_check:
+    if "scheduler_check" in args and args.scheduler_check:
         print("Scheduler check requested... hello from rides-bot!")
         sys.exit(0)
 
