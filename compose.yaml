@@ -1,0 +1,7 @@
+services:
+  scheduler:
+    image: rides-bot:latest
+    environment:
+      - TZ=America/Denver
+      - RIDESBOT_SCHEDULER_RUN_AT=*/1 * * * *
+      - RIDESBOT_SCHEDULER_RUN_COMMAND=python3 -m rides_bot.app -d

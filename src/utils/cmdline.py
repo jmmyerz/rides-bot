@@ -120,6 +120,13 @@ default_args = {
         "help": "Retrieve date (MM/DD/YYYY)",
         "kwargs": {},
     },
+    "scheduler_check": {
+        "flag": "Z",
+        "help": "Ensure the scheduler environment is set up correctly",
+        "kwargs": {
+            "action": "store_true",
+        },
+    }
 }
 
 

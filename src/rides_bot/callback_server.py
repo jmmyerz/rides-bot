@@ -18,6 +18,11 @@ class RuntimeArgs(object):
 app = Flask(__name__)
 
 
+# GET route /health
+@app.route("/health")
+def health():
+    return Response(status=200)
+
 # GET route /l/<string> for testing
 @app.route("/l/<string>")
 def linktest(string):

@@ -1,0 +1,1 @@
+*/2 * * * * * * python3 -m rides_bot.app -Z

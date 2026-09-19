@@ -1,4 +1,4 @@
-import munch
+import munch, os
 from pathlib import Path
 from typing import Self
 
@@ -31,6 +31,8 @@ def debug() -> Config:
     f = (Path(__file__).parent / "../config.yaml").resolve()
     return Config().load(filename=f)
 
+def get_config_path() -> Path:
+    return Path(os.getenv("RIDESBOT_CONFIG_FILE", (Path(__file__).parent / "../config.yaml").resolve()))
 
 if __name__ == "__main__":
     config = debug()

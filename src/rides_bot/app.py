@@ -1,19 +1,18 @@
 import datetime, json, sys, random, regex as re
-from pathlib import Path
 
 from supabase import create_client, Client as SupabaseClient
 
 import utils
 import utils.shift_logic as shift_logic
 from utils.nested_json import NestedJSONEncoder
-from utils.config import Config
+from utils.config import Config, get_config_path
 from utils.w2w import W2WSession
 from utils.groupme import GroupMe
-from utils.discord import SingleMessageClient
+#from utils.discord import SingleMessageClient
 from utils.telegram import TelegramBot
 from utils.radios import insert_call_number
 
-CONFIG_FILE_PATH = (Path(__file__).parent.parent / "config.yaml").resolve()
+CONFIG_FILE_PATH = get_config_path()
 
 
 class NoShiftsDetectedError(Exception):
@@ -28,6 +27,10 @@ def normalize_name(string: str) -> str:
 def run_bot(args):
     config = Config().load(CONFIG_FILE_PATH)
     _no_shifts_flag = False
+
+    if args.scheduler_check:
+        print("Scheduler check requested... hello from rides-bot!")
+        sys.exit(0)
 
     if not args.api:
         if args.login:
