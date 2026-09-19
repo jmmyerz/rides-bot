@@ -58,7 +58,8 @@ case "$ROLE" in
         ;;
     groupme)
         echo "Starting GroupMe listener..."
-        exec gunicorn -w 4 -b 0.0.0.0:8000 /rides-bot/src/rides_bot/callback_server:app
+        cd /rides-bot/src
+        exec gunicorn -w 4 -b 0.0.0.0:8000 rides_bot.callback_server:app
         ;;
     listener)
         echo "Starting $LISTENER_TYPE listener..."

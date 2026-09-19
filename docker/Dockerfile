@@ -8,7 +8,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
     SUPERCRONIC_SHA1SUM=e63c11a9726b775a6a11801e81af4f3fb926aa68 \
     SUPERCRONIC=supercronic-linux-amd64
 
-RUN apk add --no-cache python3 py3-pip py3-gunicorn git curl
+RUN apk add --no-cache python3 py3-pip git curl
 
 # Install supercronic
 RUN curl -fsSLO "$SUPERCRONIC_URL" \
