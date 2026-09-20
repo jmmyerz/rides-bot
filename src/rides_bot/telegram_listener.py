@@ -35,6 +35,7 @@ class Args:
         self.telegram12 = False
         self.telegram_debug = False
         self.return_telegram_message = True
+        self.scheduler_check = False
 
 
 class TelegramListener:

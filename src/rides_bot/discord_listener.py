@@ -32,6 +32,7 @@ class Args:
         self.discord_debug = False
         self.date = None
         self.message = ""
+        self.scheduler_check = False
 
 
 class DiscordListener(discord.Client):
