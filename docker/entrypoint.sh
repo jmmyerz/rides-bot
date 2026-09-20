@@ -11,6 +11,7 @@
 #   listener  - runs the bot listener (discord, groupme, telegram)
 #   debug     - runs the container in debug mode (sleeps indefinitely so you can attach and debug)
 #
+# ### This note is a test!
 set -e
 
 # Sync the /rides-bot repo
