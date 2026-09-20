@@ -11,7 +11,6 @@
 #   listener  - runs the bot listener (discord, groupme, telegram)
 #   debug     - runs the container in debug mode (sleeps indefinitely so you can attach and debug)
 #
-# ### This note is a test!
 set -e
 
 # Sync the /rides-bot repo
@@ -28,6 +27,7 @@ if [ -f "/rides-bot/docker/entrypoint.sh" ]; then
     CURRENT_HASH=$(sha256sum /entrypoint.sh | awk '{print $1}')
     if [ "$REPO_HASH" != "$CURRENT_HASH" ]; then
         echo "Entrypoint script has changed in the repository. Using the repo version."
+        chmod +x /rides-bot/docker/entrypoint.sh
         exec /rides-bot/docker/entrypoint.sh "$@"
     fi
 fi
