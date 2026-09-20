@@ -1,7 +1,66 @@
 services:
   scheduler:
     image: rides-bot:latest
+    container_name: rides-bot-scheduler
+    volumes:
+      - ./config.yaml:/rides-bot/src/config.yaml
     environment:
-      - TZ=America/Denver
-      - RIDESBOT_SCHEDULER_RUN_AT=*/1 * * * *
-      - RIDESBOT_SCHEDULER_RUN_COMMAND=python3 -m rides_bot.app -d
+      - RIDESBOT_SCHEDULER_RUN_AT=0 7 * * *
+      - RIDESBOT_SCHEDULER_RUN_COMMAND=python3 -m rides_bot.app -ag9tn
+    networks:
+      - default
+  groupme:
+    image: rides-bot:latest
+    container_name: rides-bot-groupme
+    command:
+      - listener
+      - groupme
+    volumes:
+      - ./config.yaml:/rides-bot/src/config.yaml
+    ports:
+      - 7777:8000
+    networks:
+      - traefik
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ridesbot.entrypoints=websecure
+      - traefik.http.routers.ridesbot.rule=Host(`callbacks.ridesdepartment.com`)
+      - traefik.http.routers.ridesbot.tls=true
+      - traefik.http.routers.ridesbot.tls.certresolver=ridesdepartment-certs
+      - traefik.http.routers.ridesbot.middlewares=error-pages
+      - traefik.http.services.ridesbot.loadbalancer.server.url=http://rides-bot-groupme:8000
+  telegram:
+    image: rides-bot:latest
+    container_name: rides-bot-telegram
+    command:
+      - listener
+      - telegram
+    volumes:
+      - ./config.yaml:/rides-bot/src/config.yaml
+    networks:
+      - default
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: rides-bot-status
+    restart: unless-stopped
+    depends_on:
+      - scheduler
+      - groupme
+      - telegram
+    volumes:
+      - /opt/docker/data/rides-bot/uptime-kuma:/app/data
+    networks:
+      - traefik
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ridesbot-dashboard.entrypoints=websecure
+      - traefik.http.routers.ridesbot-dashboard.rule=Host(`botstatus.ridesdepartment.com`) || Host(`ridesbot.ridesdepartment.com`)
+      - traefik.http.routers.ridesbot-dashboard.tls=true
+      - traefik.http.routers.ridesbot-dashboard.tls.certresolver=ridesdepartment-certs
+      - traefik.http.routers.ridesbot-dashboard.middlewares=error-pages
+      - traefik.http.services.ridesbot-dashboard.loadbalancer.server.url=http://rides-bot-status:3001
+networks:
+  traefik:
+    external: true
