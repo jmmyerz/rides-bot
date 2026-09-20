@@ -13,6 +13,24 @@
 #
 set -e
 
+# Sync the /rides-bot repo
+if [ -d "/rides-bot/.git" ]; then
+    echo "Syncing /rides-bot repository..."
+    cd /rides-bot
+    git pull origin master > /tmp/git_pull.log 2>&1 || { cat /tmp/git_pull.log; exit 1; }
+fi
+
+# Check the hash of this file (/entrypoint.sh) against the committed version in the repository
+# If the hash has changed, assume we should run the repo version
+if [ -f "/rides-bot/docker/entrypoint.sh" ]; then
+    REPO_HASH=$(sha256sum /rides-bot/docker/entrypoint.sh | awk '{print $1}')
+    CURRENT_HASH=$(sha256sum /entrypoint.sh | awk '{print $1}')
+    if [ "$REPO_HASH" != "$CURRENT_HASH" ]; then
+        echo "Entrypoint script has changed in the repository. Using the repo version."
+        exec /rides-bot/docker/entrypoint.sh "$@"
+    fi
+fi
+
 # Determine the role of the container based on the first argument
 ROLE="${1:-scheduler}"
 
@@ -32,13 +50,6 @@ fi
 
 # Echo the role (and optionally the listener type if applicable) alongside the PID
 echo "Starting container with role: $ROLE${LISTENER_TYPE:+, listener type: $LISTENER_TYPE}, PID: $$"
-
-# Sync the /rides-bot repo
-if [ -d "/rides-bot/.git" ]; then
-    echo "Syncing /rides-bot repository..."
-    cd /rides-bot
-    git pull origin master > /tmp/git_pull.log 2>&1 || { cat /tmp/git_pull.log; exit 1; }
-fi
 
 # Ensure the requirements are installed
 echo "Installing Python requirements..."
