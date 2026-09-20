@@ -49,7 +49,9 @@ pip3 install --no-cache-dir -r /rides-bot/requirements.txt > /tmp/pip_install.lo
 if [ "$ROLE" = "scheduler" ]; then
     echo "Running scheduler check..."
     supercronic /rides-bot/scheduler_check > /tmp/scheduler_check.log 2>&1 &
-    timeout 10 sh -c 'until grep -q "Scheduler check requested... hello from rides-bot!" /tmp/scheduler_check.log; do sleep 1; done' || { cat /tmp/scheduler_check.log; exit 1; }
+    CHECK_PID=$!
+    timeout 10 sh -c 'until grep -q "Scheduler check requested... hello from rides-bot!" /tmp/scheduler_check.log; do sleep 1; done' || { cat /tmp/scheduler_check.log; kill $CHECK_PID; exit 1; }
+    kill $CHECK_PID
     echo "$RIDESBOT_SCHEDULER_RUN_AT $RIDESBOT_SCHEDULER_RUN_COMMAND" > /cronfile
 fi
 
