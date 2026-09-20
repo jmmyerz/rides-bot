@@ -11,15 +11,7 @@
 #   listener  - runs the bot listener (discord, groupme, telegram)
 #   debug     - runs the container in debug mode (sleeps indefinitely so you can attach and debug)
 #
-# ### Test comment please ignore
 set -e
-
-if [ "$REWRITE_ENTRYPOINT" = "true" ]; then
-    cp /rides-bot/docker/entrypoint.sh /entrypoint.sh
-    chmod +x /entrypoint.sh
-    echo "Rewritten entrypoint script to /entrypoint.sh"
-    exec /entrypoint.sh "$@"
-fi
 
 # Sync the /rides-bot repo
 if [ -d "/rides-bot/.git" ]; then
@@ -35,8 +27,9 @@ if [ -f "/rides-bot/docker/entrypoint.sh" ]; then
     CURRENT_HASH=$(sha256sum /entrypoint.sh | awk '{print $1}')
     if [ "$REPO_HASH" != "$CURRENT_HASH" ]; then
         echo "Entrypoint script has changed in the repository. Using the repo version."
-        chmod +x /rides-bot/docker/entrypoint.sh
-        exec REWRITE_ENTRYPOINT=true /rides-bot/docker/entrypoint.sh "$@"
+        cp /rides-bot/docker/entrypoint.sh /entrypoint.sh
+        chmod +x /entrypoint.sh
+        exec /entrypoint.sh "$@"
     fi
 fi
 
