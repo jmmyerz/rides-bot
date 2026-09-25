@@ -17,19 +17,13 @@ services:
       - groupme
     volumes:
       - ./config.yaml:/rides-bot/src/config.yaml
-    ports:
-      - 7777:8000
     networks:
-      - traefik
+      - caddy
       - default
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.ridesbot.entrypoints=websecure
-      - traefik.http.routers.ridesbot.rule=Host(`callbacks.ridesdepartment.com`)
-      - traefik.http.routers.ridesbot.tls=true
-      - traefik.http.routers.ridesbot.tls.certresolver=ridesdepartment-certs
-      - traefik.http.routers.ridesbot.middlewares=error-pages
-      - traefik.http.services.ridesbot.loadbalancer.server.url=http://rides-bot-groupme:8000
+      caddy: callbacks.ridesdepartment.com
+      caddy.reverse_proxy: "{{upstreams 8000}}"
+      caddy.reverse_proxy.import: error-pages
   telegram:
     image: rides-bot:latest
     container_name: rides-bot-telegram
@@ -40,6 +34,11 @@ services:
       - ./config.yaml:/rides-bot/src/config.yaml
     networks:
       - default
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
   uptime-kuma:
     image: louislam/uptime-kuma:2
     container_name: rides-bot-status
@@ -51,16 +50,15 @@ services:
     volumes:
       - /opt/docker/data/rides-bot/uptime-kuma:/app/data
     networks:
-      - traefik
+      - caddy
       - default
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.ridesbot-dashboard.entrypoints=websecure
-      - traefik.http.routers.ridesbot-dashboard.rule=Host(`botstatus.ridesdepartment.com`) || Host(`ridesbot.ridesdepartment.com`)
-      - traefik.http.routers.ridesbot-dashboard.tls=true
-      - traefik.http.routers.ridesbot-dashboard.tls.certresolver=ridesdepartment-certs
-      - traefik.http.routers.ridesbot-dashboard.middlewares=error-pages
-      - traefik.http.services.ridesbot-dashboard.loadbalancer.server.url=http://rides-bot-status:3001
+      caddy_0: botstatus.ridesdepartment.com
+      caddy_0.reverse_proxy: "{{upstreams 3001}}"
+      caddy_0.reverse_proxy.import: error-pages
+      caddy_1: ridesbot.ridesdepartment.com
+      caddy_1.reverse_proxy:  "{{upstreams 3001}}"
+      caddy_1.reverse_proxy.import: error-pages
 networks:
-  traefik:
+  caddy:
     external: true
